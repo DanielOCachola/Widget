@@ -5,64 +5,82 @@
 <title>Painel Clima</title><style>
 body{
     margin:0;
-    font-family:Arial, Helvetica, sans-serif;
-    background:linear-gradient(#1e3c72,#2a5298);
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(#1e3c72,#2a5298);
     color:white;
     text-align:center;
 }
-#cidade{font-size:48px;margin-top:40px;font-weight:bold}
-#data{font-size:26px;margin-top:10px}
-#hora{font-size:80px;margin-top:20px;font-weight:bold}
-#climaBox{margin-top:30px;display:flex;justify-content:center;align-items:center;gap:20px}
-#icone{width:120px;height:120px} /* DOBRO DO TAMANHO */
-#climaTexto{font-size:30px}
+.container{
+    margin-top:80px;
+}
+.cidade{
+    font-size:42px;
+    font-weight:bold;
+}
+.data{
+    font-size:26px;
+    margin-top:10px;
+}
+.hora{
+    font-size:110px;
+    margin-top:20px;
+}
+.clima{
+    margin-top:30px;
+    font-size:30px;
+}
+#icone{
+    width:160px; /* 2x maior */
+    vertical-align:middle;
+}
 </style></head><body>
-<div id="cidade">VARGEM GRANDE DO SUL - SP</div>
-<div id="data"></div>
-<div id="hora"></div><div id="climaBox">
+<div class="container">
+    <div class="cidade">VARGEM GRANDE DO SUL - SP</div>
+    <div class="data" id="data"></div>
+    <div class="hora" id="hora"></div><div class="clima">
     <img id="icone" src="">
-    <div id="climaTexto"></div>
+    <span id="temp"></span><br>
+    <span id="sensacao"></span>
+</div>
+
 </div><script>
-// ================= RELÓGIO =================
+const apiKey = "SUA_API_KEY_AQUI"; // coloque sua chave
+
 function atualizarHora(){
     const agora = new Date();
 
-    const hora = agora.toLocaleTimeString('pt-BR');
-    document.getElementById('hora').innerText = hora;
+    const dias = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
+    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-    const data = agora.toLocaleDateString('pt-BR',{
-        weekday:'long', day:'2-digit', month:'long', year:'numeric'
-    });
-    document.getElementById('data').innerText = data.toUpperCase();
+    document.getElementById("data").innerText =
+        dias[agora.getDay()] + ", " + agora.getDate() + " de " + meses[agora.getMonth()] + " de " + agora.getFullYear();
+
+    document.getElementById("hora").innerText = agora.toLocaleTimeString();
 }
+
 setInterval(atualizarHora,1000);
 atualizarHora();
 
-// ================= CLIMA =================
-const apiKey = "b6da075db2b8724811579c96f5239b4d"; // coloque aqui
-const cidade = "Vargem Grande do Sul";
-const url = https://api.openweathermap.org/data/2.5/weather?q=${cidade},BR&appid=${apiKey}&units=metric&lang=pt_br;
+function atualizarClima(){
+    fetch(https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&appid=${apiKey}&units=metric&lang=pt_br)
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("temp").innerText =
+            Math.round(data.main.temp) + "°C - " + data.weather[0].description;
 
-async function atualizarClima(){
-    try{
-        const resposta = await fetch(url);
-        const dados = await resposta.json();
+        document.getElementById("sensacao").innerText =
+            "Sensação térmica: " + Math.round(data.main.feels_like) + "°C";
 
-        const temp = Math.round(dados.main.temp);
-        const sensacao = Math.round(dados.main.feels_like);
-        const desc = dados.weather[0].description;
-        const icone = dados.weather[0].icon;
-
-        document.getElementById('icone').src = https://openweathermap.org/img/wn/${icone}@4x.png; // icone grande
-        document.getElementById('climaTexto').innerText = ${temp}°C - ${desc} | Sensação ${sensacao}°C;
-    }
-    catch(e){
-        console.log("Erro clima",e);
-        document.getElementById('climaTexto').innerText = "Erro ao carregar clima";
-    }
+        const icone = data.weather[0].icon;
+        document.getElementById("icone").src = https://openweathermap.org/img/wn/${icone}@4x.png;
+    })
+    .catch(err => {
+        document.getElementById("temp").innerText = "Erro ao carregar clima";
+        console.log(err);
+    });
 }
 
 atualizarClima();
-setInterval(atualizarClima,600000); // atualiza a cada 10 min
+setInterval(atualizarClima,600000); // 10 minutos
 </script></body>
 </html>
