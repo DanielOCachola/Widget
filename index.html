@@ -43,7 +43,14 @@ gap:20px;
 }
 
 .weather img{
-width:240px;
+width:80px;
+}
+
+.forecast{
+margin-top:30px;
+font-size:28px;
+display:flex;
+gap:40px;
 }
 </style>
 </head>
@@ -54,6 +61,7 @@ width:240px;
 <div id="date" class="date">--</div>
 <div id="clock" class="clock">--:--:--</div>
 <div id="weather" class="weather">Carregando clima...</div>
+<div id="forecast" class="forecast"></div>
 
 <script>
 const apiKey = "b6da075db2b8724811579c96f5239b4d";
@@ -81,10 +89,14 @@ let d = await r.json();
 let icone = d.weather[0].icon;
 let desc = d.weather[0].description;
 let temp = Math.round(d.main.temp);
+let sensacao = Math.round(d.main.feels_like);
 
 document.getElementById("weather").innerHTML =
 `<img src="https://openweathermap.org/img/wn/${icone}@2x.png">
-${temp}°C - ${desc}`;
+<div>
+${temp}°C - ${desc}<br>
+Sensação térmica: ${sensacao}°C
+</div>`;
 
 }catch(e){
 document.getElementById("weather").innerHTML =
@@ -92,11 +104,53 @@ document.getElementById("weather").innerHTML =
 }
 }
 
+async function atualizarPrevisao(){
+try{
+let url =
+"https://api.openweathermap.org/data/2.5/forecast?q=Vargem%20Grande%20do%20Sul,BR&units=metric&lang=pt_br&appid="+apiKey;
+
+let r = await fetch(url);
+let d = await r.json();
+
+let diasMostrados = {};
+let html = "";
+
+for(let item of d.list){
+
+let data = item.dt_txt.split(" ")[0];
+
+if(!diasMostrados[data] && Object.keys(diasMostrados).length < 3){
+
+diasMostrados[data] = true;
+
+let temp = Math.round(item.main.temp);
+let icone = item.weather[0].icon;
+let dia = new Date(data).toLocaleDateString("pt-BR",{weekday:"short"});
+
+html += `
+<div>
+<b>${dia}</b><br>
+<img src="https://openweathermap.org/img/wn/${icone}@2x.png"><br>
+${temp}°C
+</div>`;
+}
+}
+
+document.getElementById("forecast").innerHTML = html;
+
+}catch(e){
+document.getElementById("forecast").innerHTML = "";
+}
+}
+
 setInterval(atualizarHora,1000);
 atualizarHora();
 
 atualizarClima();
+atualizarPrevisao();
+
 setInterval(atualizarClima,600000);
+setInterval(atualizarPrevisao,600000);
 </script>
 
 </body>
