@@ -8,13 +8,13 @@
 body{
   margin:0;
   font-family:Arial;
-  background:#001a33;
+  background:#0b1c2e;
   color:white;
   text-align:center;
 }
 
 .topo{
-  background:#003366;
+  background:#12395c;
   padding:20px;
   font-size:40px;
   display:flex;
@@ -22,13 +22,13 @@ body{
 }
 
 .hora{
-  font-size:120px;
-  margin-top:60px;
+  font-size:140px;
+  margin-top:40px;
 }
 
 .clima{
   font-size:60px;
-  margin-top:40px;
+  margin-top:20px;
 }
 </style>
 </head>
@@ -40,38 +40,39 @@ body{
   <span>Vargem Grande do Sul - SP</span>
 </div>
 
-<div class="hora" id="hora">--:--</div>
-<div class="clima" id="clima">Carregando clima...</div>
+<div id="hora" class="hora">--:--</div>
+<div id="clima" class="clima">Carregando clima...</div>
 
 <script>
+
 const API_KEY = "b6da075db2b8724811579c96f5239b4d";
 
 function atualizarHora(){
-  const agora = new Date();
-  document.getElementById("hora").innerText =
-    agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let agora = new Date();
+  let hora = agora.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
+  document.getElementById("hora").innerText = hora;
 }
 setInterval(atualizarHora,1000);
 atualizarHora();
 
-async function carregarClima(){
+async function clima(){
   try{
-    const resp = await fetch(
-      https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&appid=${API_KEY}&units=metric&lang=pt_br
-    );
-    const data = await resp.json();
+    let url = "https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&appid=" 
+              + API_KEY + "&units=metric&lang=pt_br";
+
+    let r = await fetch(url);
+    let d = await r.json();
 
     document.getElementById("clima").innerText =
-      data.main.temp.toFixed(0) + "°C - " +
-      data.weather[0].description;
+      Math.round(d.main.temp) + "°C - " + d.weather[0].description;
 
   }catch(e){
-    document.getElementById("clima").innerText =
-      "Erro ao carregar clima";
+    document.getElementById("clima").innerText = "Erro no clima";
   }
 }
-carregarClima();
-setInterval(carregarClima,600000);
+clima();
+setInterval(clima,600000);
+
 </script>
 
 </body>
