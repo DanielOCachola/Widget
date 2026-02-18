@@ -2,93 +2,76 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Painel Clima</title>
+<title>Painel</title>
 
 <style>
 body{
   margin:0;
-  background:linear-gradient(180deg,#0b1c2e,#07121f);
-  font-family:Arial Black, Arial;
+  background:#0b1c2e;
+  font-family:Arial Black;
   color:white;
   text-align:center;
 }
 
-.cidade{
-  font-size:70px;
-  margin-top:30px;
-  letter-spacing:3px;
-}
-
-.data{
-  font-size:60px;
-  margin-top:20px;
-}
-
-.hora{
-  font-size:200px;
-  margin-top:20px;
-}
-
-.clima{
-  font-size:70px;
-  margin-top:30px;
-}
+.cidade{font-size:70px;margin-top:20px;}
+.data{font-size:55px;margin-top:10px;}
+.hora{font-size:180px;margin-top:10px;}
+.clima{font-size:60px;margin-top:30px;}
 </style>
 </head>
 
 <body>
 
-<div class="cidade">
-VARGEM GRANDE DO SUL - SP
-</div>
-
-<div id="data" class="data">--</div>
-
-<div id="hora" class="hora">--:--:--</div>
-
+<div class="cidade">VARGEM GRANDE DO SUL - SP</div>
+<div id="data" class="data"></div>
+<div id="hora" class="hora"></div>
 <div id="clima" class="clima">Carregando clima...</div>
 
 <script>
 
-function atualizarHora(){
+// ===== HORA =====
+function atualizar(){
   let agora = new Date();
 
-  let h = agora.getHours().toString().padStart(2,"0");
-  let m = agora.getMinutes().toString().padStart(2,"0");
-  let s = agora.getSeconds().toString().padStart(2,"0");
+  document.getElementById("hora").innerHTML =
+    agora.toLocaleTimeString("pt-BR");
 
-  document.getElementById("hora").innerHTML = h+":"+m+":"+s;
-
-  let data = agora.toLocaleDateString("pt-BR", {
-    weekday:"long",
-    day:"2-digit",
-    month:"long",
-    year:"numeric"
-  });
-
-  document.getElementById("data").innerHTML = data.toUpperCase();
+  document.getElementById("data").innerHTML =
+    agora.toLocaleDateString("pt-BR",{
+      weekday:"long",
+      day:"2-digit",
+      month:"long",
+      year:"numeric"
+    }).toUpperCase();
 }
+setInterval(atualizar,1000);
+atualizar();
 
-setInterval(atualizarHora,1000);
-atualizarHora();
 
-
+// ===== CLIMA =====
 async function clima(){
   try{
     let resp = await fetch(
-      "https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&appid=b6da075db2b8724811579c96f5239b4d&units=metric&lang=pt_br"
+      "https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&units=metric&lang=pt_br&appid=b6da075db2b8724811579c96f5239b4d"
     );
+
     let d = await resp.json();
+
+    if(d.cod!=200){
+      document.getElementById("clima").innerHTML="Erro API clima";
+      return;
+    }
 
     let temp = Math.round(d.main.temp);
     let desc = d.weather[0].description;
-    let icone = d.weather[0].icon;
+    let icon = d.weather[0].icon;
 
     document.getElementById("clima").innerHTML =
-      <img src="https://openweathermap.org/img/wn/${icone}@2x.png"> ${temp}°C - ${desc};
+      `<img src="https://openweathermap.org/img/wn/${icon}@2x.png">
+       ${temp}°C - ${desc}`;
 
-  }catch{
-    document.getElementById("clima").innerHTML="Erro ao carregar clima";
+  }catch(e){
+    document.getElementById("clima").innerHTML="Sem internet para clima";
   }
 }
 
