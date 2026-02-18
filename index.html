@@ -15,13 +15,18 @@ body{
 
 .cidade{
   font-size:70px;
-  margin-top:40px;
+  margin-top:30px;
   letter-spacing:3px;
+}
+
+.data{
+  font-size:60px;
+  margin-top:20px;
 }
 
 .hora{
   font-size:200px;
-  margin-top:40px;
+  margin-top:20px;
 }
 
 .clima{
@@ -37,29 +42,47 @@ body{
 VARGEM GRANDE DO SUL - SP
 </div>
 
+<div id="data" class="data">--</div>
+
 <div id="hora" class="hora">--:--:--</div>
 
 <div id="clima" class="clima">Carregando clima...</div>
 
 <script>
+
 function atualizarHora(){
   let agora = new Date();
+
   let h = agora.getHours().toString().padStart(2,"0");
   let m = agora.getMinutes().toString().padStart(2,"0");
   let s = agora.getSeconds().toString().padStart(2,"0");
+
   document.getElementById("hora").innerHTML = h+":"+m+":"+s;
+
+  let data = agora.toLocaleDateString("pt-BR", {
+    weekday:"long",
+    day:"2-digit",
+    month:"long",
+    year:"numeric"
+  });
+
+  document.getElementById("data").innerHTML = data.toUpperCase();
 }
+
 setInterval(atualizarHora,1000);
 atualizarHora();
 
+
 async function clima(){
   try{
-    let resp = await fetch("https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&appid=b6da075db2b8724811579c96f5239b4d&units=metric&lang=pt_br");
-    let dados = await resp.json();
+    let resp = await fetch(
+      "https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&appid=b6da075db2b8724811579c96f5239b4d&units=metric&lang=pt_br"
+    );
+    let d = await resp.json();
 
-    let temp = Math.round(dados.main.temp);
-    let desc = dados.weather[0].description;
-    let icone = dados.weather[0].icon;
+    let temp = Math.round(d.main.temp);
+    let desc = d.weather[0].description;
+    let icone = d.weather[0].icon;
 
     document.getElementById("clima").innerHTML =
       <img src="https://openweathermap.org/img/wn/${icone}@2x.png"> ${temp}°C - ${desc};
@@ -71,6 +94,7 @@ async function clima(){
 
 clima();
 setInterval(clima,300000);
+
 </script>
 
 </body>
