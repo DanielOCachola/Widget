@@ -1,83 +1,133 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel</title>
 
 <style>
-body{
-  margin:0;
-  background:#0b1c2e;
-  font-family:Arial Black;
-  color:white;
-  text-align:center;
+body {
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(#1f2a44, #0d1b2a);
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+    text-align:center;
 }
 
-.cidade{font-size:70px;margin-top:20px;}
-.data{font-size:55px;margin-top:10px;}
-.hora{font-size:180px;margin-top:10px;}
-.clima{font-size:60px;margin-top:30px;}
+/* CIDADE */
+.city {
+    font-size:60px;
+    font-weight:700;
+    letter-spacing:6px;
+    margin-bottom:10px;
+}
+
+/* DATA */
+.date {
+    font-size:34px;
+    font-weight:400;
+    opacity:0.9;
+    margin-bottom:30px;
+}
+
+/* HORA */
+.clock {
+    font-size:150px;
+    font-weight:bold;
+    margin-bottom:40px;
+}
+
+/* CLIMA */
+.weather {
+    display:flex;
+    align-items:center;
+    gap:20px;
+    font-size:40px;
+    font-weight:600;
+}
+
+.weather img {
+    width:70px;
+}
+
+/* LOGO */
+.logo {
+    position:fixed;
+    bottom:20px;
+    right:30px;
+    opacity:0.8;
+}
+
+.logo img {
+    height:50px;
+}
 </style>
 </head>
-
 <body>
 
-<div class="cidade">VARGEM GRANDE DO SUL - SP</div>
-<div id="data" class="data"></div>
-<div id="hora" class="hora"></div>
-<div id="clima" class="clima">Carregando clima...</div>
+<div class="city">VARGEM GRANDE DO SUL - SP</div>
+<div class="date" id="date"></div>
+<div class="clock" id="clock"></div>
+
+<div class="weather">
+    <img id="weatherIcon">
+    <div id="weatherText"></div>
+</div>
+
+<!-- coloque seu logo aqui -->
+<div class="logo">
+    <img src="logo.png">
+</div>
 
 <script>
+/* -------- HORA -------- */
+function updateClock(){
+    const now = new Date();
 
-// ===== HORA =====
-function atualizar(){
-  let agora = new Date();
+    const hora = now.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 
-  document.getElementById("hora").innerHTML =
-    agora.toLocaleTimeString("pt-BR");
-
-  document.getElementById("data").innerHTML =
-    agora.toLocaleDateString("pt-BR",{
-      weekday:"long",
-      day:"2-digit",
-      month:"long",
-      year:"numeric"
+    const data = now.toLocaleDateString('pt-BR', {
+        weekday:'long',
+        day:'numeric',
+        month:'long',
+        year:'numeric'
     }).toUpperCase();
+
+    document.getElementById("clock").innerText = hora;
+    document.getElementById("date").innerText = data;
 }
-setInterval(atualizar,1000);
-atualizar();
+setInterval(updateClock,1000);
+updateClock();
 
 
-// ===== CLIMA =====
-async function clima(){
-  try{
-    let resp = await fetch(
-      "https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&units=metric&lang=pt_br&appid=b6da075db2b8724811579c96f5239b4d"
-    );
+/* -------- CLIMA -------- */
+/* COLOQUE SUA API KEY AQUI */
+const apiKey = "b6da075db2b8724811579c96f5239b4d";
+const cidade = "Vargem Grande do Sul";
 
-    let d = await resp.json();
+fetch(https://api.openweathermap.org/data/2.5/weather?q=${cidade},BR&units=metric&lang=pt_br&appid=${apiKey})
+.then(res => res.json())
+.then(data => {
 
-    if(d.cod!=200){
-      document.getElementById("clima").innerHTML="Erro API clima";
-      return;
-    }
+    const temp = Math.round(data.main.temp);
+    const desc = data.weather[0].description.toUpperCase();
+    const icon = data.weather[0].icon;
 
-    let temp = Math.round(d.main.temp);
-    let desc = d.weather[0].description;
-    let icon = d.weather[0].icon;
+    document.getElementById("weatherText").innerText =
+        ${temp}°C   ${desc};
 
-    document.getElementById("clima").innerHTML =
-      `<img src="https://openweathermap.org/img/wn/${icon}@2x.png">
-       ${temp}°C - ${desc}`;
-
-  }catch(e){
-    document.getElementById("clima").innerHTML="Sem internet para clima";
-  }
-}
-
-clima();
-setInterval(clima,300000);
-
+    document.getElementById("weatherIcon").src =
+        https://openweathermap.org/img/wn/${icon}@2x.png;
+});
 </script>
 
 </body>
