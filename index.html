@@ -92,7 +92,7 @@ let temp = Math.round(d.main.temp);
 let sensacao = Math.round(d.main.feels_like);
 
 document.getElementById("weather").innerHTML =
-`<img src="https://openweathermap.org/img/wn/${icone}@2x.png">
+`<img src="https://openweathermap.org/img/wn/${icone}@2x.png" onerror="this.style.display='none'">
 <div>
 ${temp}°C - ${desc}<br>
 Sensação térmica: ${sensacao}°C
