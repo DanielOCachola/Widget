@@ -2,39 +2,101 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Teste</title>
+<title>Painel Clima</title>
+
 <style>
 body{
-background:black;
+margin:0;
+background:linear-gradient(#0a1a2f,#1f4d8b);
 color:white;
-font-size:60px;
+font-family:Arial, Helvetica, sans-serif;
 text-align:center;
-margin-top:200px;
-font-family:Arial;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.city{
+font-size:60px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.date{
+font-size:40px;
+margin-bottom:20px;
+}
+
+.clock{
+font-size:120px;
+font-weight:bold;
+margin-bottom:30px;
+}
+
+.weather{
+font-size:50px;
+display:flex;
+align-items:center;
+gap:20px;
+}
+
+.weather img{
+width:80px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="data"></div>
-<div id="hora"></div>
+<div class="city">VARGEM GRANDE DO SUL - SP</div>
+<div id="date" class="date">--</div>
+<div id="clock" class="clock">--:--:--</div>
+<div id="weather" class="weather">Carregando clima...</div>
 
 <script>
-function atualizar(){
+const apiKey = "b6da075db2b8724811579c96f5239b4d";
+
+function atualizarHora(){
 let agora = new Date();
 
-document.getElementById("hora").innerHTML =
+document.getElementById("clock").innerHTML =
 agora.toLocaleTimeString("pt-BR");
 
-document.getElementById("data").innerHTML =
+document.getElementById("date").innerHTML =
 agora.toLocaleDateString("pt-BR",
-{weekday:"long",day:"numeric",month:"long",year:"numeric"}
-);
+{weekday:"long", day:"numeric", month:"long", year:"numeric"}
+).toUpperCase();
 }
 
-setInterval(atualizar,1000);
-atualizar();
+async function atualizarClima(){
+try{
+let url =
+"https://api.openweathermap.org/data/2.5/weather?q=Vargem%20Grande%20do%20Sul,BR&units=metric&lang=pt_br&appid="+apiKey;
+
+let r = await fetch(url);
+let d = await r.json();
+
+let icone = d.weather[0].icon;
+let desc = d.weather[0].description;
+let temp = Math.round(d.main.temp);
+
+document.getElementById("weather").innerHTML =
+`<img src="https://openweathermap.org/img/wn/${icone}@2x.png">
+${temp}°C - ${desc}`;
+
+}catch(e){
+document.getElementById("weather").innerHTML =
+"Erro ao carregar clima";
+}
+}
+
+setInterval(atualizarHora,1000);
+atualizarHora();
+
+atualizarClima();
+setInterval(atualizarClima,600000);
 </script>
 
 </body>
