@@ -1,61 +1,34 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1366, height=768">
+<title>ILETROCAR Clima</title>
+
 <style>
 body{
-    margin:0;
-    background:#000814;
-    color:white;
-    font-family:Arial, Helvetica, sans-serif;
-    width:1366px;
-    height:768px;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
+  margin:0;
+  font-family:Arial;
+  background:#001a33;
+  color:white;
+  text-align:center;
 }
 
-/* TOPO */
 .topo{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:25px 60px;
-    background:#001d3d;
-}
-
-.logo{
-    font-size:70px;
-    font-weight:bold;
-    color:#00e5ff;
-}
-
-.cidade{
-    font-size:42px;
-}
-
-/* CENTRO */
-.centro{
-    text-align:center;
+  background:#003366;
+  padding:20px;
+  font-size:40px;
+  display:flex;
+  justify-content:space-between;
 }
 
 .hora{
-    font-size:200px;
-    font-weight:bold;
+  font-size:120px;
+  margin-top:60px;
 }
 
-.data{
-    font-size:60px;
-    margin-top:10px;
-}
-
-/* RODAPÉ */
-.rodape{
-    text-align:center;
-    font-size:60px;
-    padding:25px;
-    background:#001d3d;
+.clima{
+  font-size:60px;
+  margin-top:40px;
 }
 </style>
 </head>
@@ -63,49 +36,42 @@ body{
 <body>
 
 <div class="topo">
-<div class="logo">ILETROCAR</div>
-<div class="cidade">Vargem Grande do Sul - SP</div>
+  <b>ILETROCAR</b>
+  <span>Vargem Grande do Sul - SP</span>
 </div>
 
-<div class="centro">
-<div class="hora" id="hora"></div>
-<div class="data" id="data"></div>
-</div>
-
-<div class="rodape" id="clima">Carregando clima...</div>
+<div class="hora" id="hora">--:--</div>
+<div class="clima" id="clima">Carregando clima...</div>
 
 <script>
+const API_KEY = "b6da075db2b8724811579c96f5239b4d";
+
 function atualizarHora(){
-    let agora = new Date();
-
-    document.getElementById("hora").innerHTML =
-        agora.toLocaleTimeString('pt-BR');
-
-    document.getElementById("data").innerHTML =
-        agora.toLocaleDateString('pt-BR',
-        {weekday:'long', day:'2-digit', month:'long'});
+  const agora = new Date();
+  document.getElementById("hora").innerText =
+    agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
 setInterval(atualizarHora,1000);
 atualizarHora();
 
-async function clima(){
-    let apiKey = "b6da075db2b8724811579c96f5239b4d";
+async function carregarClima(){
+  try{
+    const resp = await fetch(
+      https://api.openweathermap.org/data/2.5/weather?q=Vargem Grande do Sul,BR&appid=${API_KEY}&units=metric&lang=pt_br
+    );
+    const data = await resp.json();
 
-    let url = https://api.openweathermap.org/data/2.5/weather?lat=-21.8329&lon=-46.8923&units=metric&lang=pt_br&appid=${apiKey};
+    document.getElementById("clima").innerText =
+      data.main.temp.toFixed(0) + "°C - " +
+      data.weather[0].description;
 
-    try{
-        let r = await fetch(url);
-        let d = await r.json();
-
-        document.getElementById("clima").innerHTML =
-            ${Math.round(d.main.temp)}°C | ${d.weather[0].description};
-    }catch{
-        document.getElementById("clima").innerHTML =
-            "Sem dados do clima";
-    }
+  }catch(e){
+    document.getElementById("clima").innerText =
+      "Erro ao carregar clima";
+  }
 }
-clima();
-setInterval(clima,600000);
+carregarClima();
+setInterval(carregarClima,600000);
 </script>
 
 </body>
