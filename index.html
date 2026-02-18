@@ -2,101 +2,39 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Painel Clima</title>
-
+<title>Teste</title>
 <style>
 body{
-    margin:0;
-    font-family: Arial, Helvetica, sans-serif;
-    background: linear-gradient(#0f1a44,#001a22);
-    color:white;
-    text-align:center;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
-
-.city{
-    font-size:60px;
-    font-weight:bold;
-    margin-bottom:10px;
-}
-
-.date{
-    font-size:40px;
-    margin-bottom:20px;
-}
-
-.clock{
-    font-size:120px;
-    font-weight:bold;
-    margin-bottom:20px;
-}
-
-.weather{
-    font-size:50px;
-    display:flex;
-    align-items:center;
-    gap:20px;
-}
-
-.weather img{
-    width:80px;
+background:black;
+color:white;
+font-size:60px;
+text-align:center;
+margin-top:200px;
+font-family:Arial;
 }
 </style>
 </head>
 
 <body>
 
-<div class="city">VARGEM GRANDE DO SUL - SP</div>
-<div id="date" class="date"></div>
-<div id="clock" class="clock"></div>
-<div id="weather" class="weather">Carregando clima...</div>
+<div id="data"></div>
+<div id="hora"></div>
 
 <script>
-const apiKey = "b6da075db2b8724811579c96f5239b4d";
-const cidade = "Vargem Grande do Sul,BR";
+function atualizar(){
+let agora = new Date();
 
-function atualizarHora(){
-    const agora = new Date();
+document.getElementById("hora").innerHTML =
+agora.toLocaleTimeString("pt-BR");
 
-    const hora = agora.toLocaleTimeString("pt-BR", {hour12:false});
-    const data = agora.toLocaleDateString("pt-BR",
-        {weekday:"long", day:"numeric", month:"long", year:"numeric"}
-    ).toUpperCase();
-
-    document.getElementById("clock").innerHTML = hora;
-    document.getElementById("date").innerHTML = data;
+document.getElementById("data").innerHTML =
+agora.toLocaleDateString("pt-BR",
+{weekday:"long",day:"numeric",month:"long",year:"numeric"}
+);
 }
 
-setInterval(atualizarHora,1000);
-atualizarHora();
-
-
-async function clima(){
-try{
-const url = https://api.openweathermap.org/data/2.5/weather?q=${cidade}&appid=${apiKey}&units=metric&lang=pt_br;
-
-const resp = await fetch(url);
-const dados = await resp.json();
-
-const temp = Math.round(dados.main.temp);
-const desc = dados.weather[0].description;
-const icon = dados.weather[0].icon;
-
-document.getElementById("weather").innerHTML =
-`<img src="https://openweathermap.org/img/wn/${icon}@2x.png">
- ${temp}°C - ${desc}`;
-
-}catch(e){
-document.getElementById("weather").innerHTML="Erro clima";
-}
-}
-
-clima();
-setInterval(clima,600000);
+setInterval(atualizar,1000);
+atualizar();
 </script>
 
 </body>
