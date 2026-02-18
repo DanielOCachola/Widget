@@ -43,7 +43,7 @@ gap:20px;
 }
 
 .weather img{
-width:80px;
+width:120px;
 }
 
 .forecast{
@@ -51,6 +51,10 @@ margin-top:30px;
 font-size:28px;
 display:flex;
 gap:40px;
+}
+
+.forecast img{
+width:100px;
 }
 </style>
 </head>
@@ -117,6 +121,8 @@ let html = "";
 
 for(let item of d.list){
 
+if(item.dt_txt.includes("12:00:00")){
+
 let data = item.dt_txt.split(" ")[0];
 
 if(!diasMostrados[data] && Object.keys(diasMostrados).length < 3){
@@ -130,9 +136,10 @@ let dia = new Date(data).toLocaleDateString("pt-BR",{weekday:"short"});
 html += `
 <div>
 <b>${dia}</b><br>
-<img src="https://openweathermap.org/img/wn/${icone}@2x.png"><br>
+<img src="https://openweathermap.org/img/wn/${icone}@4x.png" onerror="this.style.display='none'"><br>
 ${temp}°C
 </div>`;
+}
 }
 }
 
