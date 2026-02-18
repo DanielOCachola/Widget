@@ -1,103 +1,68 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Painel Clima</title>
-
-<style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Clima</title><style>
 body{
-margin:0;
-background:linear-gradient(#0a1a2f,#1f4d8b);
-color:white;
-font-family:Arial, Helvetica, sans-serif;
-text-align:center;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-height:100vh;
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:linear-gradient(#1e3c72,#2a5298);
+    color:white;
+    text-align:center;
 }
-
-.city{
-font-size:60px;
-font-weight:bold;
-margin-bottom:20px;
-}
-
-.date{
-font-size:40px;
-margin-bottom:20px;
-}
-
-.clock{
-font-size:120px;
-font-weight:bold;
-margin-bottom:30px;
-}
-
-.weather{
-font-size:60px;
-display:flex;
-align-items:center;
-gap:20px;
-}
-
-.weather img{
-width:240px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="city">VARGEM GRANDE DO SUL - SP</div>
-<div id="date" class="date">--</div>
-<div id="clock" class="clock">--:--:--</div>
-<div id="weather" class="weather">Carregando clima...</div>
-
-<script>
-const apiKey = "b6da075db2b8724811579c96f5239b4d";
-
+#cidade{font-size:48px;margin-top:40px;font-weight:bold}
+#data{font-size:26px;margin-top:10px}
+#hora{font-size:80px;margin-top:20px;font-weight:bold}
+#climaBox{margin-top:30px;display:flex;justify-content:center;align-items:center;gap:20px}
+#icone{width:120px;height:120px} /* DOBRO DO TAMANHO */
+#climaTexto{font-size:30px}
+</style></head><body>
+<div id="cidade">VARGEM GRANDE DO SUL - SP</div>
+<div id="data"></div>
+<div id="hora"></div><div id="climaBox">
+    <img id="icone" src="">
+    <div id="climaTexto"></div>
+</div><script>
+// ================= RELÓGIO =================
 function atualizarHora(){
-let agora = new Date();
+    const agora = new Date();
 
-document.getElementById("clock").innerHTML =
-agora.toLocaleTimeString("pt-BR");
+    const hora = agora.toLocaleTimeString('pt-BR');
+    document.getElementById('hora').innerText = hora;
 
-document.getElementById("date").innerHTML =
-agora.toLocaleDateString("pt-BR",
-{weekday:"long", day:"numeric", month:"long", year:"numeric"}
-).toUpperCase();
+    const data = agora.toLocaleDateString('pt-BR',{
+        weekday:'long', day:'2-digit', month:'long', year:'numeric'
+    });
+    document.getElementById('data').innerText = data.toUpperCase();
 }
-
-async function atualizarClima(){
-try{
-let url =
-"https://api.openweathermap.org/data/2.5/weather?q=Vargem%20Grande%20do%20Sul,BR&units=metric&lang=pt_br&appid="+apiKey;
-
-let r = await fetch(url);
-let d = await r.json();
-
-let icone = d.weather[0].icon;
-let desc = d.weather[0].description;
-let temp = Math.round(d.main.temp);
-
-document.getElementById("weather").innerHTML =
-`<img src="https://openweathermap.org/img/wn/${icone}@2x.png">
-${temp}°C - ${desc}`;
-
-}catch(e){
-document.getElementById("weather").innerHTML =
-"Erro ao carregar clima";
-}
-}
-
 setInterval(atualizarHora,1000);
 atualizarHora();
 
-atualizarClima();
-setInterval(atualizarClima,600000);
-</script>
+// ================= CLIMA =================
+const apiKey = "b6da075db2b8724811579c96f5239b4d"; // coloque aqui
+const cidade = "Vargem Grande do Sul";
+const url = https://api.openweathermap.org/data/2.5/weather?q=${cidade},BR&appid=${apiKey}&units=metric&lang=pt_br;
 
-</body>
+async function atualizarClima(){
+    try{
+        const resposta = await fetch(url);
+        const dados = await resposta.json();
+
+        const temp = Math.round(dados.main.temp);
+        const sensacao = Math.round(dados.main.feels_like);
+        const desc = dados.weather[0].description;
+        const icone = dados.weather[0].icon;
+
+        document.getElementById('icone').src = https://openweathermap.org/img/wn/${icone}@4x.png; // icone grande
+        document.getElementById('climaTexto').innerText = ${temp}°C - ${desc} | Sensação ${sensacao}°C;
+    }
+    catch(e){
+        console.log("Erro clima",e);
+        document.getElementById('climaTexto').innerText = "Erro ao carregar clima";
+    }
+}
+
+atualizarClima();
+setInterval(atualizarClima,600000); // atualiza a cada 10 min
+</script></body>
 </html>
