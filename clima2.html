@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel Clima</title>
+
+<style>
+body{
+margin:0;
+background:linear-gradient(#0a1a2f,#1f4d8b);
+color:white;
+font-family:Arial, Helvetica, sans-serif;
+text-align:center;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.city{
+font-size:60px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.weather{
+font-size:50px;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:20px;
+}
+
+.weather img{
+width:150px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="city">CLIMA - VARGEM GRANDE DO SUL</div>
+<div id="weather" class="weather">Carregando clima...</div>
+
+<script>
+const apiKey = "SUA_API_KEY_AQUI";
+
+async function atualizarClima(){
+try{
+let url =
+"https://api.openweathermap.org/data/2.5/weather?q=Vargem%20Grande%20do%20Sul,BR&units=metric&lang=pt_br&appid="+apiKey;
+
+let r = await fetch(url);
+let d = await r.json();
+
+let icone = d.weather[0].icon;
+let desc = d.weather[0].description;
+let temp = Math.round(d.main.temp);
+let sensacao = Math.round(d.main.feels_like);
+
+document.getElementById("weather").innerHTML =
+`<img src="https://openweathermap.org/img/wn/${icone}@4x.png">
+<div>${temp}°C - ${desc}<br>Sensação: ${sensacao}°C</div>`;
+}catch{
+document.getElementById("weather").innerHTML = "Erro ao carregar clima";
+}
+}
+
+atualizarClima();
+setInterval(atualizarClima,600000);
+</script>
+
+</body>
+</html>
