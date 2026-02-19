@@ -19,21 +19,41 @@ height:100vh;
 }
 
 .city{
-font-size:60px;
+font-size:70px;
 font-weight:bold;
-margin-bottom:20px;
+margin-bottom:30px;
 }
 
+/* CLIMA ATUAL */
 .weather{
-font-size:50px;
+font-size:65px;
 display:flex;
 align-items:center;
 justify-content:center;
-gap:20px;
+gap:30px;
 }
 
 .weather img{
-width:150px;
+width:200px;
+}
+
+/* PREVISÃO */
+.forecast{
+margin-top:40px;
+display:flex;
+gap:60px;
+justify-content:center;
+font-size:40px;
+}
+
+.forecast div{
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+.forecast img{
+width:120px;
 }
 </style>
 </head>
@@ -42,9 +62,10 @@ width:150px;
 
 <div class="city">CLIMA - VARGEM GRANDE DO SUL</div>
 <div id="weather" class="weather">Carregando clima...</div>
+<div id="forecast" class="forecast"></div>
 
 <script>
-const apiKey = "b6da075db2b8724811579c96f5239b4d";
+const apiKey = "SUA_API_KEY_AQUI";
 
 async function atualizarClima(){
 try{
@@ -61,14 +82,62 @@ let sensacao = Math.round(d.main.feels_like);
 
 document.getElementById("weather").innerHTML =
 `<img src="https://openweathermap.org/img/wn/${icone}@4x.png">
-<div>${temp}°C - ${desc}<br>Sensação: ${sensacao}°C</div>`;
+<div>
+${temp}°C - ${desc}<br>
+Sensação térmica: ${sensacao}°C
+</div>`;
 }catch{
 document.getElementById("weather").innerHTML = "Erro ao carregar clima";
 }
 }
 
+async function atualizarPrevisao(){
+try{
+let url =
+"https://api.openweathermap.org/data/2.5/forecast?q=Vargem%20Grande%20do%20Sul,BR&units=metric&lang=pt_br&appid="+apiKey;
+
+let r = await fetch(url);
+let d = await r.json();
+
+let diasMostrados = {};
+let html = "";
+
+for(let item of d.list){
+
+if(item.dt_txt.includes("12:00:00")){
+
+let data = item.dt_txt.split(" ")[0];
+
+if(!diasMostrados[data] && Object.keys(diasMostrados).length < 3){
+
+diasMostrados[data] = true;
+
+let temp = Math.round(item.main.temp);
+let icone = item.weather[0].icon;
+let dia = new Date(data).toLocaleDateString("pt-BR",{weekday:"short"});
+
+html += `
+<div>
+<b>${dia}</b>
+<img src="https://openweathermap.org/img/wn/${icone}@4x.png">
+${temp}°C
+</div>`;
+}
+}
+}
+
+document.getElementById("forecast").innerHTML = html;
+
+}catch{
+document.getElementById("forecast").innerHTML = "";
+}
+}
+
 atualizarClima();
+atualizarPrevisao();
+
 setInterval(atualizarClima,600000);
+setInterval(atualizarPrevisao,600000);
 </script>
 
 </body>
