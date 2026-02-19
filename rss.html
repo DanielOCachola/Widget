@@ -1,1 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel Notícias</title>
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  text-align:center;
+  background:linear-gradient(#0a1a2f,#1f4d8b);
+  color:white;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.rssTitle{font-size:60px;margin-bottom:40px;}
+.rssItem{font-size:30px;margin:10px;max-width:80%;}
+</style>
+</head>
+<body>
 
+<div class="rssTitle">NOTÍCIAS DE CARROS</div>
+<div id="rss">Carregando notícias...</div>
+
+<script>
+const rssURL = "https://autopapo.uol.com.br/feed/";
+
+async function atualizarRSS(){
+  try{
+    const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL)}`);
+    const d = await r.json();
+    let html = "";
+    d.items.slice(0,5).forEach(n=>{
+      html += `<div class="rssItem">• ${n.title}</div>`;
+    });
+    document.getElementById("rss").innerHTML = html;
+  }catch{
+    document.getElementById("rss").innerHTML = "Erro ao carregar notícias";
+  }
+}
+
+atualizarRSS();
+setInterval(atualizarRSS,600000);
+</script>
+</body>
+</html>
