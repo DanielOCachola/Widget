@@ -38,8 +38,13 @@ body{
 
 .rssItem{
   font-size:28px;
-  margin:30px 0;
+  margin:20px auto;
   text-align:left;
+  background: rgba(0,0,0,0.5); /* fundo semi-transparente */
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5); /* sombra leve */
+  max-width: 800px;
 }
 
 .rssItem b{
@@ -76,7 +81,7 @@ function formatarData(dateStr){
        + " " + d.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
 }
 
-// Extrai domínio do link
+// Extrai domínio do link como fonte
 function extrairFonte(url){
   try{
     return new URL(url).hostname.replace('www.','');
@@ -95,6 +100,7 @@ async function atualizarRSS(){
       let data = formatarData(n.pubDate);
       let fonte = extrairFonte(n.link);
 
+      // Mantém só texto, com fundo sombreado
       html += `<div class="rssItem">
         <b>${n.title}</b>
         <span>${n.description || ""}</span>
@@ -130,7 +136,7 @@ function startScroll(){
 
 // Carrega e atualiza
 atualizarRSS();
-setInterval(atualizarRSS,600000);
+setInterval(atualizarRSS,600000); // atualiza a cada 10 min
 </script>
 
 </body>
