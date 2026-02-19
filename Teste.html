@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>RSS Folha – Em Cima da Hora</title>
+
 <style>
 body{
   margin:0;
@@ -18,6 +19,20 @@ body{
   overflow:hidden;
 }
 
+/* ===== FUNDO DA NOTÍCIA ===== */
+#bgImage{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background-size:cover;
+  background-position:center;
+  filter:brightness(0.35);
+  z-index:-1;
+  transition:background-image 1s ease;
+}
+
 .rssTitle{
   font-size:60px;
   margin-bottom:20px;
@@ -26,9 +41,7 @@ body{
 
 #rssContainer{
   width:90%;
-  height:70%;
-  overflow:hidden;
-  position:relative;
+  height:65%;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -36,10 +49,9 @@ body{
 
 .rssItem{
   font-size:28px;
-  margin:20px auto;
   text-align:left;
   background: rgba(0,0,0,0.5);
-  padding: 15px 20px;
+  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   max-width: 800px;
@@ -49,7 +61,6 @@ body{
   display:block;
   font-size:32px;
   margin-bottom:5px;
-  color:white;
 }
 
 .rssItem span{
@@ -57,31 +68,53 @@ body{
   color:#ddd;
 }
 
-.rssItem span a{
-  color:#ddd;
-  text-decoration:none;
-  pointer-events:none;
-}
-
 .rssItem .info{
   font-size:20px;
   color:#aaa;
-  margin-top:5px;
+  margin-top:10px;
+}
+
+#progressContainer{
+  width:80%;
+  height:10px;
+  background:rgba(255,255,255,0.2);
+  border-radius:10px;
+  margin-top:20px;
+  overflow:hidden;
+}
+
+#progressBar{
+  height:100%;
+  width:0%;
+  background:#00ffcc;
+  transition:width linear;
 }
 </style>
 </head>
 
 <body>
 
+<div id="bgImage"></div>
+
 <div class="rssTitle">EM CIMA DA HORA - FOLHA DE SÃO PAULO</div>
 <div id="rssContainer">Carregando notícias...</div>
 
+<div id="progressContainer">
+  <div id="progressBar"></div>
+</div>
+
 <script>
 const rssURL = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml";
+
+/* ===== CONFIGURAÇÕES ===== */
+const QUANTIDADE_NOTICIAS = 10;
+const TEMPO_EXIBICAO = 12000;
+const TEMPO_ATUALIZACAO = 600000;
+/* ========================= */
+
 let noticias = [];
 let indice = 0;
 
-// Data no fuso de Brasília
 function formatarData(dateStr){
   const d = new Date(dateStr);
   return d.toLocaleString("pt-BR", {
@@ -92,11 +125,8 @@ function formatarData(dateStr){
 }
 
 function extrairFonte(url){
-  try{
-    return new URL(url).hostname.replace('www.','');
-  }catch{
-    return "Fonte desconhecida";
-  }
+  try{return new URL(url).hostname.replace('www.','');}
+  catch{return "Fonte desconhecida";}
 }
 
 function limparResumo(text){
@@ -106,25 +136,36 @@ function limparResumo(text){
   return t;
 }
 
+/* ===== PEGAR IMAGEM ===== */
+function extrairImagem(item){
+  if(item.thumbnail) return item.thumbnail;
+
+  let match = item.description?.match(/<img.*?src="(.*?)"/i);
+  if(match) return match[1];
+
+  return "";
+}
+
 async function atualizarRSS(){
   try{
     const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL)}`);
     const d = await r.json();
 
-    noticias = d.items.slice(0,10).map(n=>{
+    noticias = d.items.slice(0,QUANTIDADE_NOTICIAS).map(n=>{
       return {
-        titulo: n.title,
-        resumo: limparResumo(n.description || ""),
-        data: formatarData(n.pubDate),
-        fonte: extrairFonte(n.link)
+        titulo:n.title,
+        resumo:limparResumo(n.description||""),
+        data:formatarData(n.pubDate),
+        fonte:extrairFonte(n.link),
+        imagem:extrairImagem(n)
       };
     });
 
-    indice = 0;
+    indice=0;
     mostrarNoticia();
 
   }catch{
-    document.getElementById("rssContainer").innerHTML = "Erro ao carregar notícias";
+    document.getElementById("rssContainer").innerHTML="Erro ao carregar notícias";
   }
 }
 
@@ -140,15 +181,28 @@ function mostrarNoticia(){
       <div class="info">${n.data} — ${n.fonte}</div>
    </div>`;
 
+  if(n.imagem){
+    document.getElementById("bgImage").style.backgroundImage = `url('${n.imagem}')`;
+  }
+
+  iniciarBarra();
+
   indice++;
-  if(indice >= noticias.length) indice = 0;
+  if(indice>=noticias.length) indice=0;
 }
 
-// troca notícia a cada 12 segundos
-setInterval(mostrarNoticia,12000);
+function iniciarBarra(){
+  const bar=document.getElementById("progressBar");
+  bar.style.transition="none";
+  bar.style.width="0%";
+  setTimeout(()=>{
+    bar.style.transition=`width ${TEMPO_EXIBICAO}ms linear`;
+    bar.style.width="100%";
+  },50);
+}
 
-// atualiza RSS a cada 10 min
-setInterval(atualizarRSS,600000);
+setInterval(mostrarNoticia,TEMPO_EXIBICAO);
+setInterval(atualizarRSS,TEMPO_ATUALIZACAO);
 
 atualizarRSS();
 </script>
