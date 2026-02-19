@@ -40,10 +40,10 @@ body{
   font-size:28px;
   margin:20px auto;
   text-align:left;
-  background: rgba(0,0,0,0.5); /* fundo semi-transparente */
+  background: rgba(0,0,0,0.5);
   padding: 15px 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5); /* sombra leve */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   max-width: 800px;
 }
 
@@ -51,7 +51,7 @@ body{
   display:block;
   font-size:32px;
   margin-bottom:5px;
-  color:white; /* título branco */
+  color:white;
 }
 
 .rssItem span{
@@ -60,9 +60,9 @@ body{
 }
 
 .rssItem span a{
-  color:#ddd;        /* link no resumo branco */
+  color:#ddd;
   text-decoration:none;
-  pointer-events:none; /* desativa clique */
+  pointer-events:none;
 }
 
 .rssItem .info{
@@ -96,10 +96,11 @@ function extrairFonte(url){
   }
 }
 
-// Remove tags de link do resumo e "Leia mais"
+// Remove links, "Leia mais" e horários embutidos de redir.folha.com.br
 function limparResumo(text){
-  let t = text.replace(/<a[^>]*>.*?<\/a>/gi,''); // remove tags <a>
-  t = t.replace(/Leia mais/gi,''); // remove "Leia mais"
+  let t = text.replace(/<a[^>]*>.*?<\/a>/gi,'');        // remove tags <a>
+  t = t.replace(/Leia mais/gi,'');                       // remove "Leia mais"
+  t = t.replace(/https?:\/\/redir\.folha\.com\.br[^\s]*/gi,''); // remove links redir.folha
   return t;
 }
 
@@ -149,7 +150,7 @@ function startScroll(){
 
 // Carrega e atualiza
 atualizarRSS();
-setInterval(atualizarRSS,600000); // atualiza a cada 10 min
+setInterval(atualizarRSS,600000); // a cada 10 min
 </script>
 
 </body>
