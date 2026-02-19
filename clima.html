@@ -1,1 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel Clima</title>
 
+<style>
+body{
+margin:0;
+background:linear-gradient(#0a1a2f,#1f4d8b);
+color:white;
+font-family:Arial, Helvetica, sans-serif;
+text-align:center;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.city{
+font-size:60px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.date{
+font-size:40px;
+margin-bottom:20px;
+}
+
+.clock{
+font-size:120px;
+font-weight:bold;
+margin-bottom:30px;
+}
+
+/* ===== CLIMA CENTRALIZADO ===== */
+.weather{
+font-size:50px;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:20px;
+width:100%;
+text-align:center;
+}
+
+.weather div{
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+.weather img{
+width:120px;
+}
+
+/* ===== PREVISÃO CENTRALIZADA ===== */
+.forecast{
+margin-top:30px;
+font-size:28px;
+display:flex;
+gap:40px;
+justify-content:center;
+align-items:center;
+width:100%;
+text-align:center;
+}
+
+.forecast div{
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+.forecast img{
+width:100px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="city">VARGEM GRANDE DO SUL - SP</div>
+<div id="date" class="date">--</div>
+<div id="clock" class="clock">--:--:--</div>
+<div id="weather" class="weather">Carregando clima...</div>
+<div id="forecast" class="forecast"></div>
+
+<script>
+const apiKey = "b6da075db2b8724811579c96f5239b4d";
+
+function atualizarHora(){
+let agora = new Date();
+
+document.getElementById("clock").innerHTML =
+agora.toLocaleTimeString("pt-BR");
+
+document.getElementById("date").innerHTML =
+agora.toLocaleDateString("pt-BR",
+{weekday:"long", day:"numeric", month:"long", year:"numeric"}
+).toUpperCase();
+}
+
+async function atualizarClima(){
+try{
+let url =
+"https://api.openweathermap.org/data/2.5/weather?q=Vargem%20Grande%20do%20Sul,BR&units=metric&lang=pt_br&appid="+apiKey;
+
+let r = await fetch(url);
+let d = await r.json();
+
+let icone = d.weather[0].icon;
+let desc = d.weather[0].description;
+let temp = Math.round(d.main.temp);
+let sensacao = Math.round(d.main.feels_like);
+
+document.getElementById("weather").innerHTML =
+`<img src="https://openweathermap.org/img/wn/${icone}@4x.png" onerror="this.style.display='none'">
+<div>
+${temp}°C - ${desc}<br>
+Sensação térmica: ${sensacao}°C
+</div>`;
+
+}catch(e){
+document.getElementById("weather").innerHTML =
+"Erro ao carregar clima";
+}
+}
+
+async function atualizarPrevisao(){
+try{
+let url =
+"https://api.openweathermap.org/data/2.5/forecast?q=Vargem%20Grande%20do%20Sul,BR&units=metric&lang=pt_br&appid="+apiKey;
+
+let r = await fetch(url);
+let d = await r.json();
+
+let diasMostrados = {};
+let html = "";
+
+for(let item of d.list){
+
+if(item.dt_txt.includes("12:00:00")){
+
+let data = item.dt_txt.split(" ")[0];
+
+if(!diasMostrados[data] && Object.keys(diasMostrados).length < 3){
+
+diasMostrados[data] = true;
+
+let temp = Math.round(item.main.temp);
+let icone = item.weather[0].icon;
+let dia = new Date(data).toLocaleDateString("pt-BR",{weekday:"short"});
+
+html += `
+<div>
+<b>${dia}</b>
+<img src="https://openweathermap.org/img/wn/${icone}@4x.png" onerror="this.style.display='none'">
+${temp}°C
+</div>`;
+}
+}
+}
+
+document.getElementById("forecast").innerHTML = html;
+
+}catch(e){
+document.getElementById("forecast").innerHTML = "";
+}
+}
+
+setInterval(atualizarHora,1000);
+atualizarHora();
+
+atualizarClima();
+atualizarPrevisao();
+
+setInterval(atualizarClima,600000);
+setInterval(atualizarPrevisao,600000);
+</script>
+
+</body>
+</html>
