@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Painel Clima</title>
+<title>Painel Clima + RSS</title>
 
 <style>
 body{
@@ -11,31 +11,30 @@ background:linear-gradient(#0a1a2f,#1f4d8b);
 color:white;
 font-family:Arial, Helvetica, sans-serif;
 text-align:center;
-display:flex;
+height:100vh;
+overflow:hidden;
+}
+
+/* ===== TELAS ===== */
+.screen{
+position:absolute;
+width:100%;
+height:100%;
+display:none;
 flex-direction:column;
 justify-content:center;
 align-items:center;
-height:100vh;
 }
 
-.city{
-font-size:60px;
-font-weight:bold;
-margin-bottom:20px;
+.active{
+display:flex;
 }
 
-.date{
-font-size:40px;
-margin-bottom:20px;
-}
+/* ===== SEU LAYOUT ORIGINAL ===== */
+.city{font-size:60px;font-weight:bold;margin-bottom:20px;}
+.date{font-size:40px;margin-bottom:20px;}
+.clock{font-size:120px;font-weight:bold;margin-bottom:30px;}
 
-.clock{
-font-size:120px;
-font-weight:bold;
-margin-bottom:30px;
-}
-
-/* ===== CLIMA CENTRALIZADO ===== */
 .weather{
 font-size:50px;
 display:flex;
@@ -43,7 +42,6 @@ align-items:center;
 justify-content:center;
 gap:20px;
 width:100%;
-text-align:center;
 }
 
 .weather div{
@@ -52,11 +50,8 @@ flex-direction:column;
 align-items:center;
 }
 
-.weather img{
-width:120px;
-}
+.weather img{width:120px;}
 
-/* ===== PREVISÃO CENTRALIZADA ===== */
 .forecast{
 margin-top:30px;
 font-size:28px;
@@ -65,7 +60,6 @@ gap:40px;
 justify-content:center;
 align-items:center;
 width:100%;
-text-align:center;
 }
 
 .forecast div{
@@ -74,13 +68,26 @@ flex-direction:column;
 align-items:center;
 }
 
-.forecast img{
-width:100px;
+.forecast img{width:100px;}
+
+/* ===== RSS ===== */
+.rssTitle{
+font-size:60px;
+margin-bottom:40px;
+}
+
+.rssItem{
+font-size:30px;
+margin:10px;
+max-width:80%;
 }
 </style>
 </head>
 
 <body>
+
+<!-- ===== TELA CLIMA ===== -->
+<div id="screenClima" class="screen active">
 
 <div class="city">VARGEM GRANDE DO SUL - SP</div>
 <div id="date" class="date">--</div>
@@ -88,21 +95,33 @@ width:100px;
 <div id="weather" class="weather">Carregando clima...</div>
 <div id="forecast" class="forecast"></div>
 
+</div>
+
+<!-- ===== TELA RSS ===== -->
+<div id="screenRSS" class="screen">
+<div class="rssTitle">NOTÍCIAS</div>
+<div id="rss"></div>
+</div>
+
 <script>
 const apiKey = "b6da075db2b8724811579c96f5239b4d";
 
+/* ===== HORA ===== */
 function atualizarHora(){
 let agora = new Date();
 
-document.getElementById("clock").innerHTML =
-agora.toLocaleTimeString("pt-BR");
+clock.innerHTML = agora.toLocaleTimeString("pt-BR");
 
-document.getElementById("date").innerHTML =
+date.innerHTML =
 agora.toLocaleDateString("pt-BR",
 {weekday:"long", day:"numeric", month:"long", year:"numeric"}
 ).toUpperCase();
 }
 
+setInterval(atualizarHora,1000);
+atualizarHora();
+
+/* ===== CLIMA (SEU CODIGO ORIGINAL) ===== */
 async function atualizarClima(){
 try{
 let url =
@@ -116,16 +135,14 @@ let desc = d.weather[0].description;
 let temp = Math.round(d.main.temp);
 let sensacao = Math.round(d.main.feels_like);
 
-document.getElementById("weather").innerHTML =
+weather.innerHTML =
 `<img src="https://openweathermap.org/img/wn/${icone}@4x.png" onerror="this.style.display='none'">
 <div>
 ${temp}°C - ${desc}<br>
 Sensação térmica: ${sensacao}°C
 </div>`;
-
-}catch(e){
-document.getElementById("weather").innerHTML =
-"Erro ao carregar clima";
+}catch{
+weather.innerHTML="Erro ao carregar clima";
 }
 }
 
@@ -137,48 +154,71 @@ let url =
 let r = await fetch(url);
 let d = await r.json();
 
-let diasMostrados = {};
-let html = "";
+let diasMostrados={},html="";
 
 for(let item of d.list){
-
 if(item.dt_txt.includes("12:00:00")){
+let data=item.dt_txt.split(" ")[0];
 
-let data = item.dt_txt.split(" ")[0];
+if(!diasMostrados[data] && Object.keys(diasMostrados).length<3){
+diasMostrados[data]=true;
 
-if(!diasMostrados[data] && Object.keys(diasMostrados).length < 3){
-
-diasMostrados[data] = true;
-
-let temp = Math.round(item.main.temp);
-let icone = item.weather[0].icon;
-let dia = new Date(data).toLocaleDateString("pt-BR",{weekday:"short"});
-
-html += `
+html+=`
 <div>
-<b>${dia}</b>
-<img src="https://openweathermap.org/img/wn/${icone}@4x.png" onerror="this.style.display='none'">
-${temp}°C
+<b>${new Date(data).toLocaleDateString("pt-BR",{weekday:"short"})}</b>
+<img src="https://openweathermap.org/img/wn/${item.weather[0].icon}@4x.png">
+${Math.round(item.main.temp)}°C
 </div>`;
 }
 }
 }
-
-document.getElementById("forecast").innerHTML = html;
-
-}catch(e){
-document.getElementById("forecast").innerHTML = "";
+forecast.innerHTML=html;
+}catch{}
 }
-}
-
-setInterval(atualizarHora,1000);
-atualizarHora();
 
 atualizarClima();
 atualizarPrevisao();
-
 setInterval(atualizarClima,600000);
 setInterval(atualizarPrevisao,600000);
+
+/* ===== RSS ===== */
+const rssURL =
+"https://api.rss2json.com/v1/api.json?rss_url=https://g1.globo.com/rss/g1/";
+
+async function atualizarRSS(){
+try{
+let r = await fetch(rssURL);
+let d = await r.json();
+
+let html="";
+d.items.slice(0,5).forEach(n=>{
+html += `<div class="rssItem">• ${n.title}</div>`;
+});
+
+rss.innerHTML = html;
+}catch{
+rss.innerHTML="Erro ao carregar notícias";
+}
+}
+
+atualizarRSS();
+setInterval(atualizarRSS,600000);
+
+/* ===== TROCAR TELAS ===== */
+let tela=0;
+
+setInterval(()=>{
+tela++;
+
+document.querySelectorAll(".screen")
+.forEach(s=>s.classList.remove("active"));
+
+if(tela%2==0)
+screenClima.classList.add("active");
+else
+screenRSS.classList.add("active");
+
+},30000); // 30 segundos
 </script>
 
 </body>
