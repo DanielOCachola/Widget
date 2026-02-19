@@ -74,6 +74,14 @@ body{
   margin-top:10px;
 }
 
+/* ===== CONTADOR ===== */
+.rssItem .contador{
+  font-size:18px;
+  color:#ccc;
+  margin-bottom:10px;
+  text-align:right;
+}
+
 #progressContainer{
   width:80%;
   height:10px;
@@ -107,9 +115,9 @@ body{
 const rssURL = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml";
 
 /* ===== CONFIGURAÇÕES ===== */
-const QUANTIDADE_NOTICIAS = 10;
-const TEMPO_EXIBICAO = 12000;
-const TEMPO_ATUALIZACAO = 600000;
+const QUANTIDADE_NOTICIAS = 10; // <<< MUDE AQUI QUANTAS NOTÍCIAS MOSTRAR
+const TEMPO_EXIBICAO = 12000;   // tempo por notícia (ms)
+const TEMPO_ATUALIZACAO = 600000; // atualizar RSS
 /* ========================= */
 
 let noticias = [];
@@ -136,13 +144,10 @@ function limparResumo(text){
   return t;
 }
 
-/* ===== PEGAR IMAGEM ===== */
 function extrairImagem(item){
   if(item.thumbnail) return item.thumbnail;
-
   let match = item.description?.match(/<img.*?src="(.*?)"/i);
   if(match) return match[1];
-
   return "";
 }
 
@@ -174,8 +179,13 @@ function mostrarNoticia(){
 
   const n = noticias[indice];
 
+  /* ===== CONTADOR ===== */
+  const numeroAtual = String(indice+1).padStart(2,"0");
+  const total = String(noticias.length).padStart(2,"0");
+
   document.getElementById("rssContainer").innerHTML =
   `<div class="rssItem">
+      <div class="contador">${numeroAtual}/${total}</div>
       <b>${n.titulo}</b>
       <span>${n.resumo}</span>
       <div class="info">${n.data} — ${n.fonte}</div>
