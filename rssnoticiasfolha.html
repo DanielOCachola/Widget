@@ -51,11 +51,18 @@ body{
   display:block;
   font-size:32px;
   margin-bottom:5px;
+  color:white; /* garante que título seja branco */
 }
 
 .rssItem span{
   font-size:24px;
   color:#ddd;
+}
+
+.rssItem span a{
+  color:#ddd;        /* link no resumo branco */
+  text-decoration:none;
+  pointer-events:none; /* desativa clique */
 }
 
 .rssItem .info{
@@ -74,11 +81,14 @@ body{
 <script>
 const rssURL = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml";
 
-// Formata a data em DD/MM/YYYY hh:mm
+// Formata a data em DD/MM/YYYY hh:mm considerando fuso de Brasília (UTC-3)
 function formatarData(dateStr){
   const d = new Date(dateStr);
-  return d.toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"numeric"})
-       + " " + d.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
+  // converter para UTC-3
+  const utc = d.getTime() + d.getTimezoneOffset()*60000;
+  const brasil = new Date(utc - 3*60*60000);
+  return brasil.toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"numeric"})
+       + " " + brasil.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
 }
 
 // Extrai domínio do link como fonte
@@ -90,6 +100,11 @@ function extrairFonte(url){
   }
 }
 
+// Remove tags de link do resumo
+function limparResumo(text){
+  return text.replace(/<a[^>]*>/g,'').replace(/<\/a>/g,'');
+}
+
 async function atualizarRSS(){
   try{
     const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL)}`);
@@ -99,11 +114,11 @@ async function atualizarRSS(){
     d.items.slice(0,10).forEach(n=>{
       let data = formatarData(n.pubDate);
       let fonte = extrairFonte(n.link);
+      let resumo = limparResumo(n.description || "");
 
-      // Mantém só texto, com fundo sombreado
       html += `<div class="rssItem">
         <b>${n.title}</b>
-        <span>${n.description || ""}</span>
+        <span>${resumo}</span>
         <div class="info">${data} — ${fonte}</div>
       </div>`;
     });
