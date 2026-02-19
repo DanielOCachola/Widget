@@ -16,8 +16,26 @@ body{
   align-items:center;
   height:100vh;
 }
-.rssTitle{font-size:60px;margin-bottom:40px;}
-.rssItem{font-size:30px;margin:10px;max-width:80%;}
+.rssTitle{
+  font-size:60px;
+  margin-bottom:40px;
+  font-weight:bold;
+}
+.rssItem{
+  font-size:28px;
+  margin:15px;
+  max-width:80%;
+  text-align:left;
+}
+.rssItem b{
+  display:block;
+  font-size:32px;
+  margin-bottom:5px;
+}
+.rssItem span{
+  font-size:24px;
+  color:#ddd;
+}
 </style>
 </head>
 <body>
@@ -34,7 +52,11 @@ async function atualizarRSS(){
     const d = await r.json();
     let html = "";
     d.items.slice(0,5).forEach(n=>{
-      html += `<div class="rssItem">• ${n.title}</div>`;
+      // Título + resumo
+      html += `<div class="rssItem">
+        <b>${n.title}</b>
+        <span>${n.description}</span>
+      </div>`;
     });
     document.getElementById("rss").innerHTML = html;
   }catch{
@@ -43,7 +65,8 @@ async function atualizarRSS(){
 }
 
 atualizarRSS();
-setInterval(atualizarRSS,600000);
+setInterval(atualizarRSS,600000); // atualiza a cada 10 minutos
 </script>
+
 </body>
 </html>
