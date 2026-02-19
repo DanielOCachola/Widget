@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel Relógio</title>
+
+<style>
+body{
+margin:0;
+background:linear-gradient(#0a1a2f,#1f4d8b);
+color:white;
+font-family:Arial, Helvetica, sans-serif;
+text-align:center;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.city{
+font-size:60px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.date{
+font-size:40px;
+margin-bottom:20px;
+}
+
+.clock{
+font-size:130px;
+font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="city">VARGEM GRANDE DO SUL - SP</div>
+<div id="date" class="date"></div>
+<div id="clock" class="clock"></div>
+
+<script>
+function atualizarHora(){
+let agora = new Date();
+
+document.getElementById("clock").innerHTML =
+agora.toLocaleTimeString("pt-BR");
+
+document.getElementById("date").innerHTML =
+agora.toLocaleDateString("pt-BR",
+{weekday:"long", day:"numeric", month:"long", year:"numeric"}
+).toUpperCase();
+}
+
+setInterval(atualizarHora,1000);
+atualizarHora();
+</script>
+
+</body>
+  </html>
