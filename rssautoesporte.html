@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>RSS Autoesporte</title>
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:linear-gradient(#0a1a2f,#1f4d8b);
+  color:white;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  overflow:hidden;
+}
+.rssTitle{font-size:60px;margin-bottom:20px;font-weight:bold;}
+#rssContainer{width:90%;height:70%;overflow:hidden;position:relative;}
+#rss{position:absolute;width:100%;}
+.rssItem{font-size:28px;margin:30px 0;text-align:left;}
+.rssItem b{display:block;font-size:32px;margin-bottom:5px;}
+.rssItem img{max-width:100%;margin:10px 0;}
+.rssItem span{font-size:24px;color:#ddd;}
+.rssItem .source{font-size:20px;color:#aaa;margin-top:5px;}
+</style>
+</head>
+<body>
 
+<div class="rssTitle">NOTÍCIAS AUTOESPORTE</div>
+<div id="rssContainer"><div id="rss">Carregando notícias...</div></div>
+
+<script>
+const rssURL2 = "https://autoesporte.globo.com/assunto/mercado/rss.xml";
+
+function extrairFonte(url){
+  try{return new URL(url).hostname.replace('www.','');}catch{return "Fonte desconhecida";}
+}
+
+async function atualizarRSS2(){
+  try{
+    const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL2)}`);
+    const d = await r.json();
+    let html="";
+    d.items.slice(0,10).forEach(n=>{
+      let fonte = extrairFonte(n.link);
+      let imagem = n.thumbnail || "";
+      html += `<div class="rssItem">
+        <b>${n.title}</b>
+        ${imagem?`<img src="${imagem}">`:``}
+        <span>${n.description || ""}</span>
+        <div class="source">${fonte}</div>
+      </div>`;
+    });
+    document.getElementById("rss").innerHTML = html;
+    startScroll();
+  }catch{
+    document.getElementById("rss").innerHTML="Erro ao carregar notícias";
+  }
+}
+
+let scrollPos=0,scrollInterval;
+function startScroll(){
+  const rss = document.getElementById("rss");
+  const container = document.getElementById("rssContainer");
+  clearInterval(scrollInterval);
+  scrollPos = container.offsetHeight;
+  rss.style.top = scrollPos+"px";
+  scrollInterval = setInterval(()=>{
+    scrollPos -= 1;
+    rss.style.top = scrollPos+"px";
+    if(scrollPos + rss.offsetHeight < 0){
+      scrollPos = container.offsetHeight;
+    }
+  },50);
+}
+
+atualizarRSS2();
+setInterval(atualizarRSS2,600000);
+</script>
+
+</body>
+</html>
