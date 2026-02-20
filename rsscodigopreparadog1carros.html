@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>RSS G1 – Carros</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:linear-gradient(#0a1a2f,#1f4d8b);
+  color:white;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* ===== FUNDO DA NOTÍCIA ===== */
+#bgImage{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background-size:cover;
+  background-position:center;
+  filter:brightness(0.35);
+  z-index:-1;
+  transition:background-image 1s ease;
+}
+
+.rssTitle{
+  font-size:60px;
+  margin-bottom:20px;
+  font-weight:bold;
+}
+
+#rssContainer{
+  width:90%;
+  height:65%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.rssItem{
+  font-size:28px;
+  text-align:left;
+  background: rgba(0,0,0,0.5);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  max-width: 800px;
+}
+
+.rssItem b{
+  display:block;
+  font-size:32px;
+  margin-bottom:5px;
+}
+
+.rssItem span{
+  font-size:24px;
+  color:#ddd;
+}
+
+.rssItem .info{
+  font-size:20px;
+  color:#aaa;
+  margin-top:10px;
+}
+
+.rssItem .contador{
+  font-size:18px;
+  color:#ccc;
+  margin-bottom:10px;
+  text-align:right;
+}
+
+#progressContainer{
+  width:80%;
+  height:10px;
+  background:rgba(255,255,255,0.2);
+  border-radius:10px;
+  margin-top:20px;
+  overflow:hidden;
+}
+
+#progressBar{
+  height:100%;
+  width:0%;
+  background:#00ffcc;
+  transition:width linear;
+}
+</style>
+</head>
+
+<body>
+
+<div id="bgImage"></div>
+
+<div class="rssTitle">NOTÍCIAS AUTOMOTIVAS – G1</div>
+<div id="rssContainer">Carregando notícias...</div>
+
+<div id="progressContainer">
+  <div id="progressBar"></div>
+</div>
+
+<script>
+
+/* ===== RSS G1 CARROS ===== */
+const rssURL = "https://g1.globo.com/rss/g1/carros/";
+
+/* ===== CONFIGURAÇÕES ===== */
+const QUANTIDADE_NOTICIAS = 10;
+const TEMPO_EXIBICAO = 12000;
+const TEMPO_ATUALIZACAO = 600000;
+/* ========================= */
+
+let noticias = [];
+let indice = 0;
+
+function formatarData(dateStr){
+  const d = new Date(dateStr);
+  return d.toLocaleString("pt-BR", {
+    timeZone:"America/Sao_Paulo",
+    day:"2-digit", month:"2-digit", year:"numeric",
+    hour:"2-digit", minute:"2-digit"
+  });
+}
+
+function extrairFonte(url){
+  try{return new URL(url).hostname.replace('www.','');}
+  catch{return "Fonte desconhecida";}
+}
+
+function limparResumo(text){
+  if(!text) return "";
+  let div = document.createElement("div");
+  div.innerHTML = text;
+  return div.textContent || div.innerText || "";
+}
+
+/* ===== PEGAR IMAGEM DO G1 ===== */
+function extrairImagem(item){
+  if(item.thumbnail) return item.thumbnail;
+
+  let match = item.description?.match(/<img.*?src="(.*?)"/i);
+  if(match) return match[1];
+
+  if(item.enclosure?.link) return item.enclosure.link;
+
+  return "";
+}
+
+async function atualizarRSS(){
+  try{
+    const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL)}`);
+    const d = await r.json();
+
+    noticias = d.items.slice(0,QUANTIDADE_NOTICIAS).map(n=>{
+      return {
+        titulo:n.title,
+        resumo:limparResumo(n.description||""),
+        data:formatarData(n.pubDate),
+        fonte:extrairFonte(n.link),
+        imagem:extrairImagem(n)
+      };
+    });
+
+    indice=0;
+    mostrarNoticia();
+
+  }catch{
+    document.getElementById("rssContainer").innerHTML="Erro ao carregar notícias";
+  }
+}
+
+function mostrarNoticia(){
+  if(noticias.length===0) return;
+
+  const n = noticias[indice];
+  const numeroAtual = String(indice+1).padStart(2,"0");
+  const total = String(noticias.length).padStart(2,"0");
+
+  document.getElementById("rssContainer").innerHTML =
+  `<div class="rssItem">
+      <div class="contador">${numeroAtual}/${total}</div>
+      <b>${n.titulo}</b>
+      <span>${n.resumo}</span>
+      <div class="info">${n.data} — ${n.fonte}</div>
+   </div>`;
+
+  if(n.imagem){
+    document.getElementById("bgImage").style.backgroundImage = `url('${n.imagem}')`;
+  }
+
+  iniciarBarra();
+
+  indice++;
+  if(indice>=noticias.length) indice=0;
+}
+
+function iniciarBarra(){
+  const bar=document.getElementById("progressBar");
+  bar.style.transition="none";
+  bar.style.width="0%";
+  setTimeout(()=>{
+    bar.style.transition=`width ${TEMPO_EXIBICAO}ms linear`;
+    bar.style.width="100%";
+  },50);
+}
+
+setInterval(mostrarNoticia,TEMPO_EXIBICAO);
+setInterval(atualizarRSS,TEMPO_ATUALIZACAO);
+
+atualizarRSS();
+</script>
+
+</body>
+  </html>
