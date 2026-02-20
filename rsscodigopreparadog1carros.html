@@ -19,7 +19,7 @@ body{
   overflow:hidden;
 }
 
-/* ===== FUNDO DA NOTÍCIA ===== */
+/* FUNDO */
 #bgImage{
   position:fixed;
   top:0;
@@ -66,6 +66,12 @@ body{
 .rssItem span{
   font-size:24px;
   color:#ddd;
+
+  /* LIMITE DE LINHAS */
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
 }
 
 .rssItem .info{
@@ -94,7 +100,6 @@ body{
   height:100%;
   width:0%;
   background:#00ffcc;
-  transition:width linear;
 }
 </style>
 </head>
@@ -103,7 +108,7 @@ body{
 
 <div id="bgImage"></div>
 
-<div class="rssTitle">NOTÍCIAS AUTOMOTIVAS – G1</div>
+<div class="rssTitle">G1 – NOTÍCIAS DE CARROS</div>
 <div id="rssContainer">Carregando notícias...</div>
 
 <div id="progressContainer">
@@ -111,13 +116,11 @@ body{
 </div>
 
 <script>
-
-/* ===== RSS G1 CARROS ===== */
 const rssURL = "https://g1.globo.com/rss/g1/carros/";
 
 /* ===== CONFIGURAÇÕES ===== */
-const QUANTIDADE_NOTICIAS = 10;
-const TEMPO_EXIBICAO = 12000;
+const QUANTIDADE_NOTICIAS = 10; // <<< mudar quantidade
+const TEMPO_EXIBICAO = 12000;   // <<< tempo por notícia
 const TEMPO_ATUALIZACAO = 600000;
 /* ========================= */
 
@@ -139,21 +142,23 @@ function extrairFonte(url){
 }
 
 function limparResumo(text){
-  if(!text) return "";
-  let div = document.createElement("div");
-  div.innerHTML = text;
-  return div.textContent || div.innerText || "";
+  let t = text.replace(/<a[^>]*>.*?<\/a>/gi,'');
+  t = t.replace(/Leia mais/gi,'');
+  return t;
 }
 
-/* ===== PEGAR IMAGEM DO G1 ===== */
+/* LIMITAR TAMANHO DO TEXTO */
+function limitarTexto(texto,max){
+  if(!texto) return "";
+  if(texto.length<=max) return texto;
+  return texto.substring(0,max).trim()+"...";
+}
+
+/* PEGAR IMAGEM */
 function extrairImagem(item){
   if(item.thumbnail) return item.thumbnail;
-
   let match = item.description?.match(/<img.*?src="(.*?)"/i);
   if(match) return match[1];
-
-  if(item.enclosure?.link) return item.enclosure.link;
-
   return "";
 }
 
@@ -165,7 +170,7 @@ async function atualizarRSS(){
     noticias = d.items.slice(0,QUANTIDADE_NOTICIAS).map(n=>{
       return {
         titulo:n.title,
-        resumo:limparResumo(n.description||""),
+        resumo:limitarTexto(limparResumo(n.description||""),220),
         data:formatarData(n.pubDate),
         fonte:extrairFonte(n.link),
         imagem:extrairImagem(n)
@@ -196,7 +201,7 @@ function mostrarNoticia(){
    </div>`;
 
   if(n.imagem){
-    document.getElementById("bgImage").style.backgroundImage = `url('${n.imagem}')`;
+    document.getElementById("bgImage").style.backgroundImage=`url('${n.imagem}')`;
   }
 
   iniciarBarra();
@@ -222,4 +227,4 @@ atualizarRSS();
 </script>
 
 </body>
-  </html>
+</html>
