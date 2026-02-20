@@ -19,7 +19,7 @@ body{
   overflow:hidden;
 }
 
-/* FUNDO */
+/* FUNDO DA NOTÍCIA */
 #bgImage{
   position:fixed;
   top:0;
@@ -51,27 +51,21 @@ body{
   font-size:28px;
   text-align:left;
   background: rgba(0,0,0,0.5);
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-  max-width: 800px;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 8px rgba(0,0,0,0.5);
+  max-width:900px;
 }
 
 .rssItem b{
   display:block;
-  font-size:32px;
-  margin-bottom:5px;
+  font-size:34px;
+  margin-bottom:10px;
 }
 
 .rssItem span{
-  font-size:24px;
+  font-size:26px;
   color:#ddd;
-
-  /* LIMITE DE LINHAS */
-  display:-webkit-box;
-  -webkit-line-clamp:3;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
 }
 
 .rssItem .info{
@@ -87,6 +81,7 @@ body{
   text-align:right;
 }
 
+/* BARRA */
 #progressContainer{
   width:80%;
   height:10px;
@@ -100,6 +95,7 @@ body{
   height:100%;
   width:0%;
   background:#00ffcc;
+  transition:width linear;
 }
 </style>
 </head>
@@ -108,7 +104,7 @@ body{
 
 <div id="bgImage"></div>
 
-<div class="rssTitle">G1 – NOTÍCIAS DE CARROS</div>
+<div class="rssTitle">NOTÍCIAS CARROS - G1</div>
 <div id="rssContainer">Carregando notícias...</div>
 
 <div id="progressContainer">
@@ -116,18 +112,21 @@ body{
 </div>
 
 <script>
-const rssURL = "https://g1.globo.com/rss/g1/carros/";
 
 /* ===== CONFIGURAÇÕES ===== */
-const QUANTIDADE_NOTICIAS = 10; // <<< mudar quantidade
-const TEMPO_EXIBICAO = 12000;   // <<< tempo por notícia
-const TEMPO_ATUALIZACAO = 600000;
+const rssURL = "https://g1.globo.com/rss/g1/carros/";
+const QUANTIDADE_NOTICIAS = 10;   // ← MUDE QUANTAS NOTÍCIAS MOSTRAR
+const TEMPO_EXIBICAO = 12000;     // ← TEMPO POR NOTÍCIA (ms)
+const TEMPO_ATUALIZACAO = 600000; // ← ATUALIZAR RSS
 /* ========================= */
 
 let noticias = [];
 let indice = 0;
 
+
+/* FORMATAR DATA */
 function formatarData(dateStr){
+  if(!dateStr) return "";
   const d = new Date(dateStr);
   return d.toLocaleString("pt-BR", {
     timeZone:"America/Sao_Paulo",
@@ -136,48 +135,67 @@ function formatarData(dateStr){
   });
 }
 
+
+/* PEGAR FONTE */
 function extrairFonte(url){
-  try{return new URL(url).hostname.replace('www.','');}
+  try{return new URL(url).hostname.replace("www.","");}
   catch{return "Fonte desconhecida";}
 }
 
+
+/* LIMPAR HTML DO G1 */
 function limparResumo(text){
-  let t = text.replace(/<a[^>]*>.*?<\/a>/gi,'');
-  t = t.replace(/Leia mais/gi,'');
-  return t;
+  if(!text) return "";
+
+  text = text.replace(/<img[^>]*>/gi,"");
+  text = text.replace(/<a[^>]*>.*?<\/a>/gi,"");
+  text = text.replace(/<[^>]+>/g,"");
+  text = text.replace(/\s+/g," ").trim();
+
+  return text;
 }
 
-/* LIMITAR TAMANHO DO TEXTO */
-function limitarTexto(texto,max){
-  if(!texto) return "";
-  if(texto.length<=max) return texto;
-  return texto.substring(0,max).trim()+"...";
+
+/* LIMITAR TEXTO */
+function limitarTexto(txt, max){
+  if(!txt) return "";
+  return txt.length>max ? txt.substring(0,max)+"..." : txt;
 }
+
 
 /* PEGAR IMAGEM */
 function extrairImagem(item){
   if(item.thumbnail) return item.thumbnail;
+
   let match = item.description?.match(/<img.*?src="(.*?)"/i);
   if(match) return match[1];
+
   return "";
 }
 
+
+/* CARREGAR RSS */
 async function atualizarRSS(){
   try{
-    const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL)}`);
+    const r = await fetch(
+      "https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent(rssURL)
+    );
     const d = await r.json();
 
     noticias = d.items.slice(0,QUANTIDADE_NOTICIAS).map(n=>{
       return {
         titulo:n.title,
-        resumo:limitarTexto(limparResumo(n.description||""),220),
+        resumo:limitarTexto(
+          limparResumo(n.description || n.content || "Sem resumo disponível"),
+          250
+        ),
         data:formatarData(n.pubDate),
         fonte:extrairFonte(n.link),
         imagem:extrairImagem(n)
       };
     });
 
-    indice=0;
+    indice = 0;
     mostrarNoticia();
 
   }catch{
@@ -185,10 +203,13 @@ async function atualizarRSS(){
   }
 }
 
+
+/* MOSTRAR NOTÍCIA */
 function mostrarNoticia(){
   if(noticias.length===0) return;
 
   const n = noticias[indice];
+
   const numeroAtual = String(indice+1).padStart(2,"0");
   const total = String(noticias.length).padStart(2,"0");
 
@@ -201,7 +222,8 @@ function mostrarNoticia(){
    </div>`;
 
   if(n.imagem){
-    document.getElementById("bgImage").style.backgroundImage=`url('${n.imagem}')`;
+    document.getElementById("bgImage").style.backgroundImage =
+      "url('"+n.imagem+"')";
   }
 
   iniciarBarra();
@@ -210,6 +232,8 @@ function mostrarNoticia(){
   if(indice>=noticias.length) indice=0;
 }
 
+
+/* BARRA */
 function iniciarBarra(){
   const bar=document.getElementById("progressBar");
   bar.style.transition="none";
@@ -220,10 +244,13 @@ function iniciarBarra(){
   },50);
 }
 
+
+/* LOOP */
 setInterval(mostrarNoticia,TEMPO_EXIBICAO);
 setInterval(atualizarRSS,TEMPO_ATUALIZACAO);
 
 atualizarRSS();
+
 </script>
 
 </body>
