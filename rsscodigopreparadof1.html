@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>RSS Folha – Em Cima da Hora</title>
+<title>RSS F1 – Motorsport</title>
 
 <style>
 body{
@@ -74,7 +74,6 @@ body{
   margin-top:10px;
 }
 
-/* ===== CONTADOR ===== */
 .rssItem .contador{
   font-size:18px;
   color:#ccc;
@@ -104,7 +103,7 @@ body{
 
 <div id="bgImage"></div>
 
-<div class="rssTitle">EM CIMA DA HORA - FOLHA DE SÃO PAULO</div>
+<div class="rssTitle">NOTÍCIAS FÓRMULA 1</div>
 <div id="rssContainer">Carregando notícias...</div>
 
 <div id="progressContainer">
@@ -112,12 +111,14 @@ body{
 </div>
 
 <script>
+
+/* ===== RSS MOTORSPORT ===== */
 const rssURL = "https://motorsport.uol.com.br/rss/f1/news/";
 
 /* ===== CONFIGURAÇÕES ===== */
-const QUANTIDADE_NOTICIAS = 10; // <<< MUDE AQUI QUANTAS NOTÍCIAS MOSTRAR
-const TEMPO_EXIBICAO = 12000;   // tempo por notícia (ms)
-const TEMPO_ATUALIZACAO = 600000; // atualizar RSS
+const QUANTIDADE_NOTICIAS = 10;
+const TEMPO_EXIBICAO = 12000;
+const TEMPO_ATUALIZACAO = 600000;
 /* ========================= */
 
 let noticias = [];
@@ -137,17 +138,21 @@ function extrairFonte(url){
   catch{return "Fonte desconhecida";}
 }
 
+/* ===== LIMPAR HTML ===== */
 function limparResumo(text){
-  let t = text.replace(/<a[^>]*>.*?<\/a>/gi,'');
-  t = t.replace(/Leia mais/gi,'');
-  t = t.replace(/https?:\/\/redir\.folha\.com\.br[^\s]*/gi,'');
-  return t;
+  if(!text) return "";
+  let div = document.createElement("div");
+  div.innerHTML = text;
+  return div.textContent || div.innerText || "";
 }
 
+/* ===== PEGAR IMAGEM ===== */
 function extrairImagem(item){
   if(item.thumbnail) return item.thumbnail;
+
   let match = item.description?.match(/<img.*?src="(.*?)"/i);
   if(match) return match[1];
+
   return "";
 }
 
@@ -179,7 +184,6 @@ function mostrarNoticia(){
 
   const n = noticias[indice];
 
-  /* ===== CONTADOR ===== */
   const numeroAtual = String(indice+1).padStart(2,"0");
   const total = String(noticias.length).padStart(2,"0");
 
