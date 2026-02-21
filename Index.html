@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel TV</title>
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  background:black;
+}
+
+iframe{
+  width:100vw;
+  height:100vh;
+  border:none;
+}
+</style>
+</head>
+<body>
+
+<iframe id="tela"></iframe>
+
+<script>
+
+/* ===== CONFIGURE AQUI SUAS PÁGINAS ===== */
+
+const paginas = [
+  {url:"https://danielocachola.github.io/Widget/clima.html", tempo:20000},
+  {url:"https://danielocachola.github.io/Widget/data.html", tempo:20000},
+  {url:"https://danielocachola.github.io/Widget/rssfolhaemcimadahora.html", tempo:25000},
+  {url:"https://danielocachola.github.io/Widget/rsscodigopreparadog1carros.html", tempo:25000},
+  {url:"https://danielocachola.github.io/Widget/rsscodigopreparadof1.html", tempo:25000}
+];
+
+/* ======================================= */
+
+let indice = 0;
+const frame = document.getElementById("tela");
+
+function trocarPagina(){
+  frame.src = paginas[indice].url;
+
+  setTimeout(()=>{
+    indice++;
+    if(indice >= paginas.length) indice = 0;
+    trocarPagina();
+  }, paginas[indice].tempo);
+}
+
+trocarPagina();
+
+</script>
+
+</body>
+</html>
