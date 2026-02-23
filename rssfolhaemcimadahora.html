@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>RSS Folha – Em Cima da Hora</title>
+
 <style>
 body{
   margin:0;
@@ -26,22 +27,17 @@ body{
 
 #rssContainer{
   width:90%;
-  height:70%;
-  overflow:hidden;
-  position:relative;
-}
-
-#rss{
-  position:absolute;
-  width:100%;
+  height:60%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .rssItem{
   font-size:28px;
-  margin:20px auto;
   text-align:left;
   background: rgba(0,0,0,0.5);
-  padding: 15px 20px;
+  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   max-width: 800px;
@@ -51,7 +47,6 @@ body{
   display:block;
   font-size:32px;
   margin-bottom:5px;
-  color:white;
 }
 
 .rssItem span{
@@ -59,98 +54,138 @@ body{
   color:#ddd;
 }
 
-.rssItem span a{
-  color:#ddd;
-  text-decoration:none;
-  pointer-events:none;
-}
-
 .rssItem .info{
   font-size:20px;
   color:#aaa;
-  margin-top:5px;
+  margin-top:10px;
+}
+
+.contador{
+  text-align:right;
+  font-size:18px;
+  color:#ccc;
+  margin-bottom:10px;
+}
+
+/* ===== BARRA TEMPO ===== */
+#progressContainer{
+  width:80%;
+  height:10px;
+  background:rgba(255,255,255,0.2);
+  border-radius:10px;
+  margin-top:20px;
+  overflow:hidden;
+}
+
+#progressBar{
+  height:100%;
+  width:0%;
+  background:#00ffcc;
+  transition:width linear;
 }
 </style>
 </head>
 
 <body>
 
-<div class="rssTitle">EM CIMA DA HORA - FOLHA DE SÃO PAULO</div>
-<div id="rssContainer"><div id="rss">Carregando notícias...</div></div>
+<div class="rssTitle">EM CIMA DA HORA - FOLHA</div>
+<div id="rssContainer">Carregando notícias...</div>
+
+<div id="progressContainer">
+  <div id="progressBar"></div>
+</div>
 
 <script>
 const rssURL = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml";
 
-// Formata a data no fuso de Brasília
+/* ===== CONFIGURAÇÕES ===== */
+const QUANTIDADE_NOTICIAS = 10;   // <<< MUDE AQUI
+const TEMPO_EXIBICAO = 12000;     // tempo por notícia
+const TEMPO_ATUALIZACAO = 600000; // atualizar rss
+/* ========================= */
+
+let noticias = [];
+let indice = 0;
+
 function formatarData(dateStr){
   const d = new Date(dateStr);
-  return d.toLocaleString("pt-BR", {timeZone:"America/Sao_Paulo", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit"});
+  return d.toLocaleString("pt-BR", {
+    timeZone:"America/Sao_Paulo",
+    day:"2-digit", month:"2-digit",
+    hour:"2-digit", minute:"2-digit"
+  });
 }
 
-// Extrai domínio do link como fonte
 function extrairFonte(url){
-  try{
-    return new URL(url).hostname.replace('www.','');
-  }catch{
-    return "Fonte desconhecida";
-  }
+  try{return new URL(url).hostname.replace('www.','');}
+  catch{return "Fonte";}
 }
 
-// Remove links, "Leia mais" e horários embutidos de redir.folha.com.br
 function limparResumo(text){
-  let t = text.replace(/<a[^>]*>.*?<\/a>/gi,'');        // remove tags <a>
-  t = t.replace(/Leia mais/gi,'');                       // remove "Leia mais"
-  t = t.replace(/https?:\/\/redir\.folha\.com\.br[^\s]*/gi,''); // remove links redir.folha
+  let t = text.replace(/<a[^>]>.?<\/a>/gi,'');
+  t = t.replace(/Leia mais/gi,'');
+  t = t.replace(/https?:\/\/redir\.folha\.com\.br[^\s]*/gi,'');
   return t;
 }
 
 async function atualizarRSS(){
   try{
-    const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL)}`);
+    const r = await fetch(https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL)});
     const d = await r.json();
 
-    let html = "";
-    d.items.slice(0,10).forEach(n=>{
-      let data = formatarData(n.pubDate);
-      let fonte = extrairFonte(n.link);
-      let resumo = limparResumo(n.description || "");
-
-      html += `<div class="rssItem">
-        <b>${n.title}</b>
-        <span>${resumo}</span>
-        <div class="info">${data} — ${fonte}</div>
-      </div>`;
+    noticias = d.items.slice(0,QUANTIDADE_NOTICIAS).map(n=>{
+      return {
+        titulo:n.title,
+        resumo:limparResumo(n.description||""),
+        data:formatarData(n.pubDate),
+        fonte:extrairFonte(n.link)
+      };
     });
 
-    document.getElementById("rss").innerHTML = html;
-    startScroll();
+    indice = 0;
+    mostrarNoticia();
 
   }catch{
-    document.getElementById("rss").innerHTML = "Erro ao carregar notícias";
+    document.getElementById("rssContainer").innerHTML="Erro ao carregar notícias";
   }
 }
 
-let scrollPos = 0, scrollInterval;
-function startScroll(){
-  const rss = document.getElementById("rss");
-  const container = document.getElementById("rssContainer");
-  clearInterval(scrollInterval);
+function mostrarNoticia(){
+  if(noticias.length===0) return;
 
-  scrollPos = container.offsetHeight;
-  rss.style.top = scrollPos + "px";
+  const n = noticias[indice];
 
-  scrollInterval = setInterval(()=>{
-    scrollPos -= 1;
-    rss.style.top = scrollPos + "px";
-    if(scrollPos + rss.offsetHeight < 0){
-      scrollPos = container.offsetHeight;
-    }
+  const atual = String(indice+1).padStart(2,"0");
+  const total = String(noticias.length).padStart(2,"0");
+
+  document.getElementById("rssContainer").innerHTML =
+  `<div class="rssItem">
+     <div class="contador">${atual}/${total}</div>
+     <b>${n.titulo}</b>
+     <span>${n.resumo}</span>
+     <div class="info">${n.data} — ${n.fonte}</div>
+   </div>`;
+
+  iniciarBarra();
+
+  indice++;
+  if(indice>=noticias.length) indice=0;
+}
+
+function iniciarBarra(){
+  const bar=document.getElementById("progressBar");
+  bar.style.transition="none";
+  bar.style.width="0%";
+  setTimeout(()=>{
+    bar.style.transition=width ${TEMPO_EXIBICAO}ms linear;
+    bar.style.width="100%";
   },50);
 }
 
-// Carrega e atualiza
+setInterval(mostrarNoticia,TEMPO_EXIBICAO);
+setInterval(atualizarRSS,TEMPO_ATUALIZACAO);
+
 atualizarRSS();
-setInterval(atualizarRSS,600000); // a cada 10 min
 </script>
 
 </body>
