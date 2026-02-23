@@ -2,154 +2,188 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>RSS Folha</title>
+<title>RSS Folha – Em Cima da Hora</title>
 
 <style>
 body{
-margin:0;
-font-family:Arial;
-background:linear-gradient(#0a1a2f,#1f4d8b);
-color:white;
-text-align:center;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-height:100vh;
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:linear-gradient(#0a1a2f,#1f4d8b);
+  color:white;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  overflow:hidden;
 }
 
 .rssTitle{
-font-size:60px;
-margin-bottom:20px;
+  font-size:60px;
+  margin-bottom:20px;
+  font-weight:bold;
 }
 
 #rssContainer{
-width:90%;
-height:65%;
-display:flex;
-align-items:center;
-justify-content:center;
+  width:90%;
+  height:65%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .rssItem{
-font-size:28px;
-background:rgba(0,0,0,0.5);
-padding:20px;
-border-radius:10px;
-max-width:900px;
-text-align:left;
+  font-size:28px;
+  text-align:left;
+  background: rgba(0,0,0,0.5);
+  padding:20px;
+  border-radius:10px;
+  max-width:900px;
 }
 
 .contador{
-text-align:right;
-font-size:18px;
-color:#ccc;
-margin-bottom:10px;
+  font-size:18px;
+  text-align:right;
+  color:#ccc;
+  margin-bottom:10px;
 }
 
-#progress{
-width:80%;
-height:10px;
-background:#444;
-margin-top:20px;
-border-radius:10px;
-overflow:hidden;
+.rssItem b{
+  display:block;
+  font-size:34px;
+  margin-bottom:10px;
 }
 
-#bar{
-height:100%;
-width:0%;
-background:#00ffcc;
-transition:width linear;
+.rssItem span{
+  font-size:26px;
+  color:#ddd;
+}
+
+.info{
+  font-size:20px;
+  color:#aaa;
+  margin-top:10px;
+}
+
+#progressContainer{
+  width:80%;
+  height:10px;
+  background:rgba(255,255,255,0.2);
+  border-radius:10px;
+  margin-top:20px;
+  overflow:hidden;
+}
+
+#progressBar{
+  height:100%;
+  width:0%;
+  background:#00ffcc;
 }
 </style>
 </head>
 
 <body>
 
-<div class="rssTitle">FOLHA – EM CIMA DA HORA</div>
-<div id="rssContainer">Carregando...</div>
+<div class="rssTitle">EM CIMA DA HORA - FOLHA</div>
+<div id="rssContainer">Carregando notícias...</div>
 
-<div id="progress"><div id="bar"></div></div>
+<div id="progressContainer">
+  <div id="progressBar"></div>
+</div>
 
 <script>
-const rssURL="https://feeds.folha.uol.com.br/emcimadahora/rss091.xml";
+
+const rssURL = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml";
 
 /* ===== CONFIGURAÇÕES ===== */
-const QTDE = 10;          // quantidade notícias
-const TEMPO = 10000;      // tempo por notícia
-const ATUALIZA = 600000;  // atualizar RSS
+const QUANTIDADE_NOTICIAS = 10;
+const TEMPO_EXIBICAO = 12000;      // tempo por notícia
+const TEMPO_ATUALIZACAO = 600000;  // atualizar RSS
 /* ========================= */
 
-let noticias=[];
-let indice=0;
+let noticias = [];
+let indice = 0;
 
-function formatarData(d){
-return new Date(d).toLocaleString("pt-BR",
-{timeZone:"America/Sao_Paulo"});
+function formatarData(dateStr){
+  const d = new Date(dateStr);
+  return d.toLocaleString("pt-BR", {
+    timeZone:"America/Sao_Paulo",
+    day:"2-digit", month:"2-digit",
+    hour:"2-digit", minute:"2-digit"
+  });
+}
+
+function limparResumo(text){
+  return text
+    .replace(/<a[^>]*>.*?<\/a>/gi,'')
+    .replace(/Leia mais/gi,'')
+    .replace(/https?:\/\/redir\.folha\.com\.br[^\s]*/gi,'');
 }
 
 async function atualizarRSS(){
-try{
-let r=await fetch("https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent(rssURL));
-let d=await r.json();
+  try{
+    const r = await fetch(
+      "https://api.rss2json.com/v1/api.json?rss_url="
+      + encodeURIComponent(rssURL)
+    );
 
-if(!d.items || d.items.length==0){
-document.getElementById("rssContainer").innerHTML="Sem notícias";
-return;
+    const d = await r.json();
+
+    noticias = d.items.slice(0,QUANTIDADE_NOTICIAS).map(n=>({
+      titulo:n.title,
+      resumo:limparResumo(n.description||""),
+      data:formatarData(n.pubDate),
+      fonte:new URL(n.link).hostname.replace("www.","")
+    }));
+
+    indice = 0;
+    mostrarNoticia();
+
+  }catch(e){
+    document.getElementById("rssContainer").innerHTML =
+      "Erro ao carregar notícias";
+    console.log(e);
+  }
 }
 
-noticias=d.items.slice(0,QTDE);
-indice=0;
-mostrar();
+function mostrarNoticia(){
+  if(noticias.length===0) return;
 
-}catch(e){
-document.getElementById("rssContainer").innerHTML="Erro ao carregar RSS";
-}
-}
+  const n = noticias[indice];
 
-function mostrar(){
-if(noticias.length==0) return;
+  const atual = String(indice+1).padStart(2,"0");
+  const total = String(noticias.length).padStart(2,"0");
 
-let n=noticias[indice];
+  document.getElementById("rssContainer").innerHTML =
+  `<div class="rssItem">
+      <div class="contador">${atual}/${total}</div>
+      <b>${n.titulo}</b>
+      <span>${n.resumo}</span>
+      <div class="info">${n.data} — ${n.fonte}</div>
+   </div>`;
 
-let titulo=n.title||"";
-let resumo=(n.description||"").replace(/<[^>]*>/g,"");
-let data=formatarData(n.pubDate||"");
-let fonte=new URL(n.link||"https://folha.uol.com.br").hostname;
+  iniciarBarra();
 
-let num=String(indice+1).padStart(2,"0");
-let tot=String(noticias.length).padStart(2,"0");
-
-document.getElementById("rssContainer").innerHTML=
-`<div class="rssItem">
-<div class="contador">${num}/${tot}</div>
-<b>${titulo}</b><br>
-${resumo}<br><br>
-${data} — ${fonte}
-</div>`;
-
-barra();
-
-indice++;
-if(indice>=noticias.length) indice=0;
+  indice++;
+  if(indice>=noticias.length) indice=0;
 }
 
-function barra(){
-let b=document.getElementById("bar");
-b.style.transition="none";
-b.style.width="0%";
-setTimeout(()=>{
-b.style.transition=width ${TEMPO}ms linear;
-b.style.width="100%";
-},50);
+function iniciarBarra(){
+  const bar=document.getElementById("progressBar");
+  bar.style.transition="none";
+  bar.style.width="0%";
+  setTimeout(()=>{
+    bar.style.transition=`width ${TEMPO_EXIBICAO}ms linear`;
+    bar.style.width="100%";
+  },50);
 }
 
-setInterval(mostrar,TEMPO);
-setInterval(atualizarRSS,ATUALIZA);
+setInterval(mostrarNoticia,TEMPO_EXIBICAO);
+setInterval(atualizarRSS,TEMPO_ATUALIZACAO);
 
 atualizarRSS();
-</script>
 
+</script>
 </body>
 </html>
