@@ -16,7 +16,19 @@ body{
   justify-content:center;
   align-items:center;
   height:100vh;
-  overflow:hidden;
+}
+
+/* ===== FUNDO ===== */
+#bgImage{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background-size:cover;
+  background-position:center;
+  filter:brightness(0.35);
+  z-index:-1;
 }
 
 .rssTitle{
@@ -27,7 +39,7 @@ body{
 
 #rssContainer{
   width:90%;
-  height:60%;
+  height:65%;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -36,156 +48,138 @@ body{
 .rssItem{
   font-size:28px;
   text-align:left;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
   max-width: 800px;
 }
 
-.rssItem b{
-  display:block;
-  font-size:32px;
-  margin-bottom:5px;
+.contador{
+  font-size:18px;
+  text-align:right;
+  margin-bottom:10px;
+  color:#ccc;
 }
 
-.rssItem span{
-  font-size:24px;
-  color:#ddd;
-}
-
-.rssItem .info{
+.info{
   font-size:20px;
   color:#aaa;
   margin-top:10px;
 }
 
-.contador{
-  text-align:right;
-  font-size:18px;
-  color:#ccc;
-  margin-bottom:10px;
-}
-
-/* ===== BARRA TEMPO ===== */
 #progressContainer{
   width:80%;
   height:10px;
   background:rgba(255,255,255,0.2);
   border-radius:10px;
   margin-top:20px;
-  overflow:hidden;
 }
 
 #progressBar{
   height:100%;
   width:0%;
   background:#00ffcc;
-  transition:width linear;
 }
 </style>
 </head>
 
 <body>
 
+<div id="bgImage"></div>
 <div class="rssTitle">EM CIMA DA HORA - FOLHA</div>
 <div id="rssContainer">Carregando notícias...</div>
 
 <div id="progressContainer">
-  <div id="progressBar"></div>
+<div id="progressBar"></div>
 </div>
 
 <script>
-const rssURL = "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml";
 
-/* ===== CONFIGURAÇÕES ===== */
-const QUANTIDADE_NOTICIAS = 10;   // <<< MUDE AQUI
-const TEMPO_EXIBICAO = 12000;     // tempo por notícia
-const TEMPO_ATUALIZACAO = 600000; // atualizar rss
-/* ========================= */
+const rssURL="https://feeds.folha.uol.com.br/emcimadahora/rss091.xml";
 
-let noticias = [];
-let indice = 0;
+/* CONFIGURAÇÕES */
+const QUANTIDADE=10;
+const TEMPO=12000;
+/* ------------ */
 
-function formatarData(dateStr){
-  const d = new Date(dateStr);
-  return d.toLocaleString("pt-BR", {
-    timeZone:"America/Sao_Paulo",
-    day:"2-digit", month:"2-digit",
-    hour:"2-digit", minute:"2-digit"
-  });
+let noticias=[];
+let i=0;
+
+function limpar(txt){
+  return txt.replace(/<[^>]*>/g,"");
 }
 
-function extrairFonte(url){
-  try{return new URL(url).hostname.replace('www.','');}
-  catch{return "Fonte";}
+function fonte(link){
+  try{return new URL(link).hostname;}
+  catch{return "";}
 }
 
-function limparResumo(text){
-  let t = text.replace(/<a[^>]>.?<\/a>/gi,'');
-  t = t.replace(/Leia mais/gi,'');
-  t = t.replace(/https?:\/\/redir\.folha\.com\.br[^\s]*/gi,'');
-  return t;
+async function carregar(){
+
+try{
+
+const r=await fetch(
+https://api.rss2json.app/v1/api.json?rss_url=${encodeURIComponent(rssURL)}
+);
+
+const d=await r.json();
+
+noticias=d.items.slice(0,QUANTIDADE);
+
+mostrar();
+
+}catch{
+document.getElementById("rssContainer").innerHTML="Erro ao carregar RSS";
 }
 
-async function atualizarRSS(){
-  try{
-    const r = await fetch(https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssURL)});
-    const d = await r.json();
-
-    noticias = d.items.slice(0,QUANTIDADE_NOTICIAS).map(n=>{
-      return {
-        titulo:n.title,
-        resumo:limparResumo(n.description||""),
-        data:formatarData(n.pubDate),
-        fonte:extrairFonte(n.link)
-      };
-    });
-
-    indice = 0;
-    mostrarNoticia();
-
-  }catch{
-    document.getElementById("rssContainer").innerHTML="Erro ao carregar notícias";
-  }
 }
 
-function mostrarNoticia(){
-  if(noticias.length===0) return;
+function mostrar(){
 
-  const n = noticias[indice];
+if(noticias.length==0)return;
 
-  const atual = String(indice+1).padStart(2,"0");
-  const total = String(noticias.length).padStart(2,"0");
+const n=noticias[i];
 
-  document.getElementById("rssContainer").innerHTML =
-  `<div class="rssItem">
-     <div class="contador">${atual}/${total}</div>
-     <b>${n.titulo}</b>
-     <span>${n.resumo}</span>
-     <div class="info">${n.data} — ${n.fonte}</div>
-   </div>`;
+const num=String(i+1).padStart(2,"0");
+const tot=String(noticias.length).padStart(2,"0");
 
-  iniciarBarra();
+document.getElementById("rssContainer").innerHTML=
+`
+<div class="rssItem">
+<div class="contador">${num}/${tot}</div>
+<b>${n.title}</b>
+<div>${limpar(n.description||"")}</div>
+<div class="info">${fonte(n.link)}</div>
+</div>
+`;
 
-  indice++;
-  if(indice>=noticias.length) indice=0;
+if(n.thumbnail){
+document.getElementById("bgImage").style.backgroundImage=
+url('${n.thumbnail}');
 }
 
-function iniciarBarra(){
-  const bar=document.getElementById("progressBar");
-  bar.style.transition="none";
-  bar.style.width="0%";
-  setTimeout(()=>{
-    bar.style.transition=width ${TEMPO_EXIBICAO}ms linear;
-    bar.style.width="100%";
-  },50);
+barra();
+
+i++;
+if(i>=noticias.length)i=0;
+
 }
 
-setInterval(mostrarNoticia,TEMPO_EXIBICAO);
-setInterval(atualizarRSS,TEMPO_ATUALIZACAO);
+function barra(){
+const b=document.getElementById("progressBar");
+b.style.transition="none";
+b.style.width="0%";
+setTimeout(()=>{
+b.style.transition=width ${TEMPO}ms linear;
+b.style.width="100%";
+},50);
+}
 
-atualizarRSS();
+setInterval(mostrar,TEMPO);
+setInterval(carregar,600000);
+
+carregar();
+
 </script>
 
 </body>
